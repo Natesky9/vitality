@@ -1,5 +1,7 @@
 package com.natesky9;
 
+import lombok.Getter;
+import lombok.Setter;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.client.RuneLite;
@@ -19,21 +21,34 @@ import java.awt.image.BufferedImage;
 public class VitalityOverlay extends Overlay {
     private static final Class<?> PLUGIN_CLASS = VitalityPlugin.class;
     public static final ImageIcon HEALSPLAT = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
-            "/com/natesky9/heal.png"));
+            "/heal.png"));
 
     @Inject
     private VitalityPlugin plugin;
+    @Inject
+    private VitalityConfig config;
+    @Inject
+    private Client client;
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        Actor actor = plugin.localPlayer;
-        //if (actor == null) return null;
-        System.out.println("test");
+        Actor actor = plugin.getLocalPlayer();
+        if (actor == null) return null;
 
-        BufferedImage image = drawHitsplat(99);
+        int value = config.ignoreRegen() ? 1:0;
+
+        if (plugin.difference <= value) return null;
+        if (plugin.getTimer() > 100) return null;
+        plugin.setTimer(plugin.getTimer()+1);
+
+        BufferedImage image = drawHitsplat(plugin.difference);
         Point cPoint = actor.getCanvasImageLocation(image,actor.getLogicalHeight()/2);
-        Point p = new Point(cPoint.getX()+1, cPoint.getY());
-        OverlayUtil.renderImageLocation(graphics, new Point(p.getX(), p.getY()),image);
+        int rise = 0;
+        if (config.healRise())
+            rise = (plugin.getTimer() /10);
+        rise -= 5;//offset it so it's not in the crotch
+        Point p = new Point(cPoint.getX(), cPoint.getY());
+        OverlayUtil.renderImageLocation(graphics, new Point(p.getX()-1, p.getY()-rise),image);
 
         return null;
     }
@@ -48,6 +63,8 @@ public class VitalityOverlay extends Overlay {
     public BufferedImage drawCenteredDamageNumbers(Graphics g, String text, BufferedImage bi)
     {
         Font font = FontManager.getRunescapeSmallFont();
+        if (config.healScaling())
+                font = FontManager.getRunescapeSmallFont().deriveFont(16f+ plugin.difference);
         FontMetrics metrics = g.getFontMetrics(font);
         int x = (bi.getWidth() - metrics.stringWidth(text)) /2;
         int y = ((bi.getHeight() - metrics.getHeight())/2) + metrics.getAscent();
@@ -63,7 +80,10 @@ public class VitalityOverlay extends Overlay {
         Image image = icon.getImage();
         int height = icon.getIconHeight();
         int width = icon.getIconWidth();
-        Image tempImage = image.getScaledInstance(width,height,Image.SCALE_SMOOTH);
+        int scale = 1;
+        if (config.healScaling())
+            scale = 1+(int) (plugin.difference*.05);
+        Image tempImage = image.getScaledInstance(width*scale,height*scale,Image.SCALE_SMOOTH);
         ImageIcon sizedImageIcon = new ImageIcon(tempImage);
 
         BufferedImage bi = new BufferedImage(

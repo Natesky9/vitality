@@ -12,8 +12,26 @@ public interface VitalityConfig extends Config
 			name = "Ignore Regeneration",
 			description = "Shows regeneration healing"
 	)
-    static boolean ignoreRegen()
+    default boolean ignoreRegen()
 	{
 		return true;
+	}
+	@ConfigItem(
+			keyName = "healRise",
+			name = "Fancy Heal",
+			description = "Heal splat does a gentle rise"
+	)
+	default boolean healRise()
+	{
+		return true;
+	}
+	@ConfigItem(
+			keyName = "healScaling",
+			name = "Scales with heal",
+			description = "Size scales with bigger heals"
+	)
+	default boolean healScaling()
+	{
+		return false;
 	}
 }

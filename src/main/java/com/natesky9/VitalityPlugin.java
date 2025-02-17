@@ -19,6 +19,7 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
+import net.runelite.client.ui.overlay.OverlayManager;
 
 import java.awt.*;
 
@@ -32,21 +33,34 @@ public class VitalityPlugin extends Plugin
 	private Client client;
 
 	@Inject
+	private OverlayManager overlayManager;
+
+	@Inject
+	private VitalityOverlay vitalityOverlay;
+
+	@Inject
 	private VitalityConfig config;
 
 	@Override
 	protected void startUp() throws Exception
 	{
+		overlayManager.add(vitalityOverlay);
 		//log.info("Example started!");
 	}
 	@Getter @Setter
-	private int health = 0;
+	public int health = 0;
+	@Getter @Setter
+	public int difference = 0;
 	@Getter @Setter
 	public Actor localPlayer = null;
+	@Getter @Setter
+	public int timer;
+
 
 	@Override
 	protected void shutDown() throws Exception
 	{
+		overlayManager.remove(vitalityOverlay);
 		//log.info("Example stopped!");
 	}
 
@@ -55,9 +69,10 @@ public class VitalityPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-
-			health = client.getBoostedSkillLevel(Skill.HITPOINTS);
-			localPlayer = client.getLocalPlayer();
+			setHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+			setDifference(9);
+			setTimer(1000);
+			setLocalPlayer(client.getLocalPlayer());
 		}
 	}
 
@@ -66,21 +81,20 @@ public class VitalityPlugin extends Plugin
 	{
 		Player player = client.getLocalPlayer();
 		Skill skill = event.getSkill();
-		boolean ignoreRegen = VitalityConfig.ignoreRegen();
 		if (!(skill == Skill.HITPOINTS)) return;
 
-		int last = health;
+		int last = getHealth();
 		int current = client.getBoostedSkillLevel(Skill.HITPOINTS);
 		player.setOverheadText("health changed: " + String.valueOf(current-last));
 		player.setOverheadCycle(120);
 
 		if (current > last)
 		{
-			new Hitsplat(44,current-last,120);
+			//System.out.println("last is: " + last);
 		}
-		System.out.println("last is: " + last);
-
+		setDifference(current - last);
 		setHealth(current);
+		setTimer(0);
 	}
 
 	@Provides
