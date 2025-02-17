@@ -85,8 +85,6 @@ public class VitalityPlugin extends Plugin
 
 		int last = getHealth();
 		int current = client.getBoostedSkillLevel(Skill.HITPOINTS);
-		player.setOverheadText("health changed: " + String.valueOf(current-last));
-		player.setOverheadCycle(120);
 
 		if (current > last)
 		{
