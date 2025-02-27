@@ -78,7 +78,6 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onStatChanged(StatChanged event)
 	{
-		System.out.println(client.getGameState());
 		Skill skill = event.getSkill();
 		if (!(skill == Skill.HITPOINTS)) return;
 
