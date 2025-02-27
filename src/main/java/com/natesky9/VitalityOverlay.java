@@ -37,18 +37,18 @@ public class VitalityOverlay extends Overlay {
 
         int value = config.ignoreRegen() ? 1:0;
 
-        if (plugin.difference <= value) return null;
+        if (plugin.getDifference() <= value) return null;
         if (plugin.getTimer() > 100) return null;
         plugin.setTimer(plugin.getTimer()+1);
 
-        BufferedImage image = drawHitsplat(plugin.difference);
-        Point cPoint = actor.getCanvasImageLocation(image,actor.getLogicalHeight()/2);
+        BufferedImage image = drawHitsplat(plugin.getDifference());
+        Point cPoint = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-5);
         int rise = 0;
         if (config.healRise())
-            rise = (plugin.getTimer() /10);
-        rise -= 5;//offset it so it's not in the crotch
+            rise = (plugin.getTimer() /20);
+        rise -= 2;//offset it so it's not in the crotch
         Point p = new Point(cPoint.getX(), cPoint.getY());
-        OverlayUtil.renderImageLocation(graphics, new Point(p.getX()-1, p.getY()-rise),image);
+        OverlayUtil.renderImageLocation(graphics, new Point(p.getX()-4, p.getY()-rise),image);
 
         return null;
     }
@@ -64,7 +64,8 @@ public class VitalityOverlay extends Overlay {
     {
         Font font = FontManager.getRunescapeSmallFont();
         if (config.healScaling())
-                font = FontManager.getRunescapeSmallFont().deriveFont(16f+ plugin.difference);
+                font = FontManager.getRunescapeSmallFont()
+                        .deriveFont(16f + plugin.getDifference()/8f);
         FontMetrics metrics = g.getFontMetrics(font);
         int x = (bi.getWidth() - metrics.stringWidth(text)) /2;
         int y = ((bi.getHeight() - metrics.getHeight())/2) + metrics.getAscent();
@@ -82,7 +83,7 @@ public class VitalityOverlay extends Overlay {
         int width = icon.getIconWidth();
         int scale = 1;
         if (config.healScaling())
-            scale = 1+(int) (plugin.difference*.05);
+            scale = 1+(int) (plugin.difference*.02);
         Image tempImage = image.getScaledInstance(width*scale,height*scale,Image.SCALE_SMOOTH);
         ImageIcon sizedImageIcon = new ImageIcon(tempImage);
 

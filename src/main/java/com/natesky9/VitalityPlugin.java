@@ -45,10 +45,9 @@ public class VitalityPlugin extends Plugin
 	protected void startUp() throws Exception
 	{
 		overlayManager.add(vitalityOverlay);
-		//log.info("Example started!");
 	}
 	@Getter @Setter
-	public int health = 0;
+	public int health = 255;
 	@Getter @Setter
 	public int difference = 0;
 	@Getter @Setter
@@ -61,7 +60,6 @@ public class VitalityPlugin extends Plugin
 	protected void shutDown() throws Exception
 	{
 		overlayManager.remove(vitalityOverlay);
-		//log.info("Example stopped!");
 	}
 
 	@Subscribe
@@ -69,9 +67,10 @@ public class VitalityPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			setHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
-			setDifference(9);
-			setTimer(1000);
+			//System.out.println("health is: " + client.getBoostedSkillLevel(Skill.HITPOINTS));
+			//setHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+			//setDifference(0);
+			//setTimer(1000);
 			setLocalPlayer(client.getLocalPlayer());
 		}
 	}
@@ -79,7 +78,7 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onStatChanged(StatChanged event)
 	{
-		Player player = client.getLocalPlayer();
+		System.out.println(client.getGameState());
 		Skill skill = event.getSkill();
 		if (!(skill == Skill.HITPOINTS)) return;
 
