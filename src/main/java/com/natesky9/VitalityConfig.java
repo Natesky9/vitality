@@ -3,6 +3,7 @@ package com.natesky9;
 import net.runelite.client.config.Config;
 import net.runelite.client.config.ConfigGroup;
 import net.runelite.client.config.ConfigItem;
+import net.runelite.client.config.Range;
 
 @ConfigGroup("Vitality")
 public interface VitalityConfig extends Config
@@ -33,5 +34,16 @@ public interface VitalityConfig extends Config
 	default boolean healScaling()
 	{
 		return false;
+	}
+	
+	@Range(min = Integer.MIN_VALUE)
+	@ConfigItem(
+			keyName = "zOffset",
+			name = "Hitsplat offset",
+			description = "Offsets the hitsplat on the Z axis"
+	)
+	default int zOffset()
+	{
+		return 180;
 	}
 }

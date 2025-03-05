@@ -42,7 +42,7 @@ public class VitalityOverlay extends Overlay {
         plugin.setTimer(plugin.getTimer()+1);
 
         BufferedImage image = drawHitsplat(plugin.getDifference());
-        Point cPoint = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-5);
+        Point cPoint = actor.getCanvasImageLocation(image, config.zOffset());
         int rise = 0;
         if (config.healRise())
             rise = (plugin.getTimer() /20);
