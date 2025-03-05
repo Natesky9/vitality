@@ -38,11 +38,11 @@ public interface VitalityConfig extends Config
 	
 	@Range(min = Integer.MIN_VALUE)
 	@ConfigItem(
-			keyName = "zOffset",
+			keyName = "yOffset",
 			name = "Hitsplat offset",
-			description = "Offsets the hitsplat on the Z axis"
+			description = "Offsets the hitsplat on the Y axis"
 	)
-	default int zOffset()
+	default int yOffset()
 	{
 		return 180;
 	}

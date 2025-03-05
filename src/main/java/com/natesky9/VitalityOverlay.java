@@ -1,13 +1,7 @@
 package com.natesky9;
 
-import lombok.Getter;
-import lombok.Setter;
 import net.runelite.api.*;
 import net.runelite.api.Point;
-import net.runelite.client.RuneLite;
-import net.runelite.client.game.AlternateSprites;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayUtil;
@@ -42,7 +36,7 @@ public class VitalityOverlay extends Overlay {
         plugin.setTimer(plugin.getTimer()+1);
 
         BufferedImage image = drawHitsplat(plugin.getDifference());
-        Point cPoint = actor.getCanvasImageLocation(image, config.zOffset());
+        Point cPoint = actor.getCanvasImageLocation(image, config.yOffset());
         int rise = 0;
         if (config.healRise())
             rise = (plugin.getTimer() /20);
