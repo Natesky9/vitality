@@ -1,9 +1,6 @@
 package com.natesky9;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.Range;
+import net.runelite.client.config.*;
 
 @ConfigGroup("Vitality")
 public interface VitalityConfig extends Config
@@ -36,6 +33,7 @@ public interface VitalityConfig extends Config
 		return false;
 	}
 	
+	@Units(Units.PIXELS)
 	@Range(min = Integer.MIN_VALUE)
 	@ConfigItem(
 			keyName = "yOffset",
@@ -44,6 +42,6 @@ public interface VitalityConfig extends Config
 	)
 	default int yOffset()
 	{
-		return 180;
+		return 0;
 	}
 }
