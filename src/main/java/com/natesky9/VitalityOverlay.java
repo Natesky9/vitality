@@ -1,13 +1,7 @@
 package com.natesky9;
 
-import lombok.Getter;
-import lombok.Setter;
 import net.runelite.api.*;
 import net.runelite.api.Point;
-import net.runelite.client.RuneLite;
-import net.runelite.client.game.AlternateSprites;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayUtil;
@@ -34,22 +28,35 @@ public class VitalityOverlay extends Overlay {
     public Dimension render(Graphics2D graphics) {
         Actor actor = plugin.getLocalPlayer();
         if (actor == null) return null;
-
-        int value = config.ignoreRegen() ? 1:0;
-
+    
+        int value = config.ignoreRegen() ? 1 : 0;
+    
         if (plugin.getDifference() <= value) return null;
         if (plugin.getTimer() > 100) return null;
-        plugin.setTimer(plugin.getTimer()+1);
-
+        plugin.setTimer(plugin.getTimer() + 1);
+    
         BufferedImage image = drawHitsplat(plugin.getDifference());
-        Point cPoint = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-5);
+    
+        Polygon poly = actor.getCanvasTilePoly();
+        if (poly == null) return null;
+        
+        Rectangle bounds = poly.getBounds();
+        int centerX = bounds.x + bounds.width / 2;
+        int centerY = bounds.y + bounds.height / 2;
+        
+        int imageWidth = image.getWidth();
+        int imageHeight = image.getHeight();
+        int centeredX = centerX - (imageWidth / 2);
+        int centeredY = centerY - (imageHeight / 2);
+        
         int rise = 0;
-        if (config.healRise())
-            rise = (plugin.getTimer() /20);
-        rise -= 2;//offset it so it's not in the crotch
-        Point p = new Point(cPoint.getX(), cPoint.getY());
-        OverlayUtil.renderImageLocation(graphics, new Point(p.getX()-4, p.getY()-rise),image);
-
+        if (config.healRise()) {
+            rise = (plugin.getTimer() / 20);
+        }
+        rise -= 2; // Offset to avoid crotch-level positioning
+        
+        OverlayUtil.renderImageLocation(graphics, new Point(centeredX - 4, (centeredY - rise) + (config.yOffset() - 50)), image);
+    
         return null;
     }
     private BufferedImage drawHitsplat(int damage)
