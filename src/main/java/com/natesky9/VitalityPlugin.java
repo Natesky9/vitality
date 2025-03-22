@@ -8,10 +8,9 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
 import net.runelite.api.annotations.HitsplatType;
-import net.runelite.api.events.GameStateChanged;
-import net.runelite.api.events.HitsplatApplied;
-import net.runelite.api.events.PlayerChanged;
-import net.runelite.api.events.StatChanged;
+import net.runelite.api.coords.WorldPoint;
+import net.runelite.api.events.*;
+import net.runelite.api.kit.KitType;
 import net.runelite.client.RuneLite;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
@@ -22,6 +21,11 @@ import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
 
 import java.awt.*;
+import java.awt.geom.Area;
+import java.time.Clock;
+import java.time.LocalDate;
+import java.time.Month;
+import java.util.*;
 
 @Slf4j
 @PluginDescriptor(
@@ -55,6 +59,13 @@ public class VitalityPlugin extends Plugin
 	@Getter @Setter
 	public int timer;
 
+	@Getter @Setter
+	public int jokeTimer;
+	@Getter @Setter
+	WorldPoint tile;
+	@Getter @Setter
+	public Actor fool;
+
 
 	@Override
 	protected void shutDown() throws Exception
@@ -72,6 +83,7 @@ public class VitalityPlugin extends Plugin
 			//setDifference(0);
 			//setTimer(1000);
 			setLocalPlayer(client.getLocalPlayer());
+			setJokeTimer(0);
 		}
 	}
 
@@ -84,13 +96,68 @@ public class VitalityPlugin extends Plugin
 		int last = getHealth();
 		int current = client.getBoostedSkillLevel(Skill.HITPOINTS);
 
-		if (current > last)
+		//region soulreaper edge case
+		int weapon = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
+		if (weapon == 28338 && current - last == 8)//if current weapon is the Soulreaper axe
 		{
-			//System.out.println("last is: " + last);
+			setHealth(current);
+			return;
 		}
+		//endregion soulreaper edge case
+
+		//region foodHealing
+		if (config.excludeFood() && localPlayer.getAnimation() == AnimationID.CONSUMING)
+		{
+			//test if stats are changed before animation plays
+			setHealth(current);
+			return;
+		}
+		//endregion foodHealing
+
 		setDifference(current - last);
 		setHealth(current);
 		setTimer(0);
+	}
+
+	@Subscribe
+	public void onGameTick(GameTick event)
+	{
+		if (LocalDate.now().getDayOfMonth() == 1
+				&& LocalDate.now().getMonth() == Month.APRIL
+				&& config.aprilFools())
+		{
+			if (client.getLocalPlayer().getWorldLocation().getX() != getTile().getX()
+			&& client.getLocalPlayer().getWorldLocation().getY() != getTile().getY())
+			{
+				setJokeTimer(0);
+				setTile(client.getLocalPlayer().getWorldLocation());
+			}
+
+			setJokeTimer(Math.min(getJokeTimer()+1,60));
+			//System.out.println(jokeTimer);
+			if (getJokeTimer() >= 58)
+			{
+				int x = (int)((Math.random()-.5) * 256) * 8;
+				int y = (int)((Math.random()-.5) * 256) * 8;
+				Projectile projectile = client.getWorldView(-1).createProjectile(772,localPlayer.getWorldLocation().getPlane(),
+				localPlayer.getLocalLocation().getX()+x,localPlayer.getLocalLocation().getY()+y, -500,
+				client.getGameCycle(), client.getGameCycle()+60,
+				-100,100,100,
+				localPlayer,localPlayer.getWorldLocation().getX(),localPlayer.getWorldLocation().getY());
+				//System.out.println("my cabbages!");
+				client.getWorldView(-1).getProjectiles().addLast(projectile);
+			}
+		}
+	}
+
+	@Subscribe
+	public void onPostObjectComposition(PostObjectComposition event)
+	{
+		//if (event.getObjectComposition().getId() == 1161)
+		//{
+		//	test stuff for april fools event
+		//	int cabbage = event.getObjectComposition().getMapSceneId();
+		//}
 	}
 
 	@Provides
