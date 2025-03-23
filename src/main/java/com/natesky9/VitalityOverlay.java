@@ -1,14 +1,8 @@
 package com.natesky9;
 
-import lombok.Getter;
-import lombok.Setter;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
-import net.runelite.client.RuneLite;
-import net.runelite.client.game.AlternateSprites;
-import net.runelite.client.game.ItemManager;
-import net.runelite.client.game.SpriteManager;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.Overlay;
 import net.runelite.client.ui.overlay.OverlayUtil;
@@ -47,7 +41,7 @@ public class VitalityOverlay extends Overlay {
 
         if (LocalDate.now().getDayOfMonth() == 1
                 && LocalDate.now().getMonth() == Month.APRIL
-                &&config.aprilFools() && plugin.jokeTimer == 60)
+                && config.aprilFools() && !plugin.fools.isEmpty())
         {
             BufferedImage fool = drawJokeHitsplat();
             int offset = getAnchorPoint(actor);
@@ -57,7 +51,7 @@ public class VitalityOverlay extends Overlay {
             int y = ((((client.getGameCycle()+30) % 120) / 30)-1) % 2;
             y *= 16;
             if (client.getGameCycle() % 30 < 15)
-                OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x, point.getY()-y),fool);
+                OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
         }
 
         int value = config.ignoreRegen() ? 1:0;
