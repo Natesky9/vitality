@@ -172,7 +172,7 @@ public class VitalityPlugin extends Plugin
 				-100,100,100,
 				localPlayer,localPlayer.getWorldLocation().getX(),localPlayer.getWorldLocation().getY());
 		//System.out.println("my cabbages!");
-		client.getWorldView(-1).getProjectiles().addLast(projectile);
+		client.getProjectiles().addLast(projectile);
 
 		//set animation
 		for (RuneLiteObject object: getFools())
