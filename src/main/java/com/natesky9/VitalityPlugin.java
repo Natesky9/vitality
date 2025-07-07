@@ -7,12 +7,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import net.runelite.api.*;
+import net.runelite.api.annotations.HitsplatType;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.api.coords.WorldPoint;
 import net.runelite.api.events.*;
 import net.runelite.api.kit.KitType;
 import net.runelite.client.config.ConfigManager;
 import net.runelite.client.eventbus.Subscribe;
+import net.runelite.client.game.SpriteManager;
 import net.runelite.client.plugins.Plugin;
 import net.runelite.client.plugins.PluginDescriptor;
 import net.runelite.client.ui.overlay.OverlayManager;
@@ -31,13 +33,10 @@ public class VitalityPlugin extends Plugin
 	public Animation ATTACK;
 	@Inject
 	private Client client;
-
 	@Inject
 	private OverlayManager overlayManager;
-
 	@Inject
 	private VitalityOverlay vitalityOverlay;
-
 	@Inject
 	private VitalityConfig config;
 
@@ -49,11 +48,7 @@ public class VitalityPlugin extends Plugin
 	@Getter @Setter
 	public int health = 255;
 	@Getter @Setter
-	public int difference = 0;
-	@Getter @Setter
 	public Actor localPlayer = null;
-	@Getter @Setter
-	public int timer = 0;
 
 	@Getter @Setter
 	public int jokeTimer = 0;
@@ -63,6 +58,10 @@ public class VitalityPlugin extends Plugin
 	public SecretFeature secretFeature;
 	@Getter @Setter
 	public ArrayList<RuneLiteObject> fools;
+	@Getter @Setter
+	public ArrayList<Hitsplat> hitsplats;
+	@Getter @Setter
+	public ArrayList<Hitsplat> healsplats;
 
 
 	@Override
@@ -70,7 +69,33 @@ public class VitalityPlugin extends Plugin
 	{
 		overlayManager.remove(vitalityOverlay);
 	}
+	@Subscribe
+	public void onHitsplatApplied(HitsplatApplied applied)
+	{
+		if (!config.displayTickEat()) return;
 
+		Hitsplat hit = applied.getHitsplat();
+		if (!hit.isMine()) return;
+		int amount = hit.getAmount();
+		if (amount == 0) return;
+		if (hit.getHitsplatType() != HitsplatID.DAMAGE_ME) return;
+
+		int heals = 0;
+		for (Hitsplat hitsplat: healsplats)
+		{
+			heals += hitsplat.getAmount();
+		}
+		//System.out.println("healed damage is: " + heals);
+		//System.out.println("taken damage is: " + amount);
+		int current = getHealth();//client.getBoostedSkillLevel(Skill.HITPOINTS);
+		//System.out.println("current is: " + current);
+		if (amount < heals)
+		{
+			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,current-amount,client.getGameCycle()+32);
+			hitsplats.add(hurt);
+			client.playSoundEffect(5190);
+		}
+	}
 	@Subscribe
 	public void onGameStateChanged(GameStateChanged gameStateChanged)
 	{
@@ -80,12 +105,12 @@ public class VitalityPlugin extends Plugin
 			setSecretFeature(new SecretFeature(client));
 			IDLE = client.loadAnimation(AnimationID.IDLE);
 			ATTACK = client.loadAnimation(AnimationID.CRAFTING_BATTLESTAVES);
-			//setHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
-			//setDifference(0);
-			//setTimer(1000);
+			setHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
 			setLocalPlayer(client.getLocalPlayer());
 			setTile(client.getLocalPlayer().getWorldLocation());
 			setFools(new ArrayList<>());
+			setHitsplats(new ArrayList<>());
+			setHealsplats(new ArrayList<>());
 		}
 	}
 
@@ -98,10 +123,20 @@ public class VitalityPlugin extends Plugin
 		int last = getHealth();
 		int current = client.getBoostedSkillLevel(Skill.HITPOINTS);
 
+		//region regen config
+		if (current-last == 1 && config.ignoreRegen())
+		{
+			setHealth(current);
+			return;
+		}
+		//endregion regen config
+
 		//region soulreaper edge case
 		int weapon = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
-		if (weapon == 28338 && current - last == 8)//if current weapon is the Soulreaper axe
+		if (weapon == 28338 && current - last % 8 == 0
+				&& localPlayer.getAnimation() == AnimationID.CONSUMING)
 		{
+			//if current weapon is the Soulreaper axe
 			setHealth(current);
 			return;
 		}
@@ -116,14 +151,61 @@ public class VitalityPlugin extends Plugin
 		}
 		//endregion foodHealing
 
-		setDifference(current - last);
+		//add healsplat
+		if (current > last)
+		{
+			Hitsplat heal = new Hitsplat(HitsplatID.HEAL,current-last,client.getGameCycle()+32);
+
+			if (!healsplats.isEmpty())
+			{
+				for (Hitsplat existing:healsplats)
+				{
+					healsplats.set(healsplats.indexOf(existing),new Hitsplat(existing.getHitsplatType(),
+							existing.getAmount(),client.getGameCycle()+32));
+				}
+			}
+			healsplats.add(heal);
+		}
 		setHealth(current);
-		setTimer(0);
 	}
 
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		//region debug code, comment out when done
+		//if (client.getGameCycle() % 40 < 10)
+		//{
+		//	Hitsplat heal1 = new Hitsplat(HitsplatID.HEAL,6,client.getGameCycle()+32);
+		//	healsplats.add(heal1);
+		//	Hitsplat heal2 = new Hitsplat(HitsplatID.HEAL,9,client.getGameCycle()+32);
+		//	healsplats.add(heal2);
+		//	Hitsplat heal3 = new Hitsplat(HitsplatID.HEAL,4,client.getGameCycle()+32);
+		//	healsplats.add(heal3);
+		//}
+		//endregion debug code
+
+		//region clear expired hitsplats
+		if (!hitsplats.isEmpty())
+			for (int i = hitsplats.size()-1;i>=0;i--)
+			{
+				Hitsplat hurt = hitsplats.get(i);
+				if (hurt.getDisappearsOnGameCycle() < client.getGameCycle())
+				{
+					hitsplats.remove(hurt);
+				}
+			}
+		if (!healsplats.isEmpty())
+			for (int i = healsplats.size()-1;i>=0;i--)
+			{
+				Hitsplat heal = healsplats.get(i);
+				if (heal.getDisappearsOnGameCycle() < client.getGameCycle())
+				{
+					healsplats.remove(heal);
+				}
+			}
+		//endregion clear expired hitsplats
+
+		//region april fools
 		if (LocalDate.now().getDayOfMonth() == 1
 				&& LocalDate.now().getMonth() == Month.APRIL
 				&& config.aprilFools())
@@ -150,6 +232,7 @@ public class VitalityPlugin extends Plugin
 				spawnCabbage();
 			}
 		}
+		//endregion april fools
 	}
 	void spawnCabbage()
 	{

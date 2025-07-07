@@ -19,6 +19,8 @@ public class VitalityOverlay extends Overlay {
     private static final Class<?> PLUGIN_CLASS = VitalityPlugin.class;
     public static final ImageIcon HEALSPLAT = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
             "/heal.png"));
+    public static final ImageIcon DODGE = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
+            "/dodge.png"));
     public static final ImageIcon APRIL = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
             "/cabbage.png"));
 
@@ -36,14 +38,13 @@ public class VitalityOverlay extends Overlay {
         LocalPoint playerLocation = actor.getLocalLocation();
         LocalPoint location = new LocalPoint(playerLocation.getX(),playerLocation.getY());
 
-        //redundant check
-        //if (actor == null) return null;
-
         if (LocalDate.now().getDayOfMonth() == 1
                 && LocalDate.now().getMonth() == Month.APRIL
                 && config.aprilFools() && !plugin.fools.isEmpty())
         {
-            BufferedImage fool = drawJokeHitsplat();
+            Hitsplat joke = new Hitsplat(HitsplatID.DAMAGE_ME_POISE,
+                    (int) (Math.random()*99),client.getGameCycle()+16);
+            BufferedImage fool = drawHitsplat(joke,APRIL);
             int offset = getAnchorPoint(actor);
             Point point = Perspective.getCanvasImageLocation(client,location,fool,offset);
             int x = (((client.getGameCycle() % 120) / 30)-1) % 2;
@@ -54,25 +55,44 @@ public class VitalityOverlay extends Overlay {
                 OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
         }
 
-        int value = config.ignoreRegen() ? 1:0;
 
-        if (plugin.getDifference() <= value) return null;
-        if (plugin.getTimer() > 100) return null;
-        plugin.setTimer(plugin.getTimer()+1);
+        if (!plugin.healsplats.isEmpty())
+        {
+            for (int i=0;i<plugin.healsplats.size();i++)
+            {
+                Hitsplat heal = plugin.healsplats.get(i);
+                BufferedImage image = drawHitsplat(heal,HEALSPLAT);
+                int offset = getAnchorPoint(actor);
+                Point point = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-offset);
+                int x = 0;
+                if (i == 1) x=20;
+                if (i == 2) x=-20;
+                int y = i > 0 ? 20:0;
+                if (config.healRise())
+                    y += (heal.getDisappearsOnGameCycle()-client.getGameCycle())/10;
 
-        BufferedImage image = drawHitsplat(plugin.getDifference());
-        int offset = getAnchorPoint(actor);
-        //Point point = Perspective.getCanvasImageLocation(client,location,image,offset);
-        //using a better perspective point
-        Point point = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-offset);
-        int rise = 0;
-        if (config.healRise())
-            rise = (plugin.getTimer() /20);
-        //not needed anymore?
-        //rise -= 2;//offset it so it's not in the crotch
-        //Point p = new Point(point.getX(), point.getY());
-        OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-4, point.getY()-rise),image);
-
+                Point canvas = new Point(point.getX()-4-x, point.getY()-y);
+                OverlayUtil.renderImageLocation(graphics, canvas,image);
+            }
+        }
+        if (!plugin.hitsplats.isEmpty())
+        {
+            //int damage = 0;
+            //for (Hitsplat hitsplat: plugin.healsplats)
+            //{
+            //    damage += hitsplat.getAmount();
+            //}
+            //if (client.getBoostedSkillLevel(Skill.HITPOINTS) < damage)
+            //{
+            Hitsplat dodge = plugin.hitsplats.get(0);
+            BufferedImage image = drawHitsplat(dodge,DODGE);
+            int offset = getAnchorPoint(actor);
+            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-offset);
+            int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
+            Point canvas = new Point(point.getX()+16-x,point.getY());
+            OverlayUtil.renderImageLocation(graphics,canvas,image);
+            //}
+        }
         return null;
     }
     enum cardinal
@@ -91,28 +111,22 @@ public class VitalityOverlay extends Overlay {
             default:return actor.getLogicalHeight();
         }
     }
-    private BufferedImage drawHitsplat(int damage)
+    private BufferedImage drawHitsplat(Hitsplat hitsplat, ImageIcon imageIcon)
     {
-        BufferedImage bi = iconToBuffered(HEALSPLAT);
+        BufferedImage bi = iconToBuffered(hitsplat, imageIcon);
         Graphics g = bi.getGraphics();
-        bi = drawCenteredDamageNumbers(g, String.valueOf(damage), bi);
+        bi = drawCenteredDamageNumbers(g, hitsplat, bi);
         g.dispose();
         return bi;
     }
-    private BufferedImage drawJokeHitsplat()
+    public BufferedImage drawCenteredDamageNumbers(Graphics g, Hitsplat hitsplat, BufferedImage bi)
     {
-        BufferedImage bi = iconToBuffered(APRIL);
-        Graphics g = bi.getGraphics();
-        bi = drawCenteredDamageNumbers(g, "OOF", bi);
-        g.dispose();
-        return bi;
-    }
-    public BufferedImage drawCenteredDamageNumbers(Graphics g, String text, BufferedImage bi)
-    {
+        String text = String.valueOf(hitsplat.getAmount());
+        int value = hitsplat.getAmount();
         Font font = FontManager.getRunescapeSmallFont();
         if (config.healScaling())
                 font = FontManager.getRunescapeSmallFont()
-                        .deriveFont(16f + plugin.getDifference()/8f);
+                        .deriveFont(16f + value/8f);
         FontMetrics metrics = g.getFontMetrics(font);
         int x = (bi.getWidth() - metrics.stringWidth(text)) /2;
         int y = ((bi.getHeight() - metrics.getHeight())/2) + metrics.getAscent();
@@ -123,14 +137,15 @@ public class VitalityOverlay extends Overlay {
         g.drawString(text,x,y);
         return bi;
     }
-    private BufferedImage iconToBuffered(ImageIcon icon)
+    private BufferedImage iconToBuffered(Hitsplat hitsplat, ImageIcon icon)
     {
+        int value = hitsplat.getAmount();
         Image image = icon.getImage();
         int height = icon.getIconHeight();
         int width = icon.getIconWidth();
         int scale = 1;
         if (config.healScaling())
-            scale = 1+(int) (plugin.difference*.02);
+            scale = 1+(int) (value*.02);
 
         Image tempImage;
 

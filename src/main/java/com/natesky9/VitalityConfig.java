@@ -53,7 +53,7 @@ public interface VitalityConfig extends Config
 
 	@ConfigItem(
 			keyName = "excludeFood",
-			name = "Exclude Food (experimental)",
+			name = "Exclude Food",
 			description = "Ignore food/potion healing",
 			section = generalSettings
 	)
@@ -61,12 +61,22 @@ public interface VitalityConfig extends Config
 	{
 		return false;
 	}
+	@ConfigItem(
+			keyName = "displayTickEat",
+			name = "Display Tickeats",
+			description = "Show when an attack was tick ate",
+			section = generalSettings
+	)
+	default boolean displayTickEat()
+	{
+		return true;
+	}
 
 	@ConfigItem(
 			keyName = "healRise",
 			name = "Fancy Heal",
 			description = "Heal splat does a gentle rise",
-			section = generalSettings
+			section = funSettings
 	)
 	default boolean healRise()
 	{
