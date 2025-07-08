@@ -4,8 +4,7 @@ import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
 import net.runelite.client.ui.FontManager;
-import net.runelite.client.ui.overlay.Overlay;
-import net.runelite.client.ui.overlay.OverlayUtil;
+import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.ImageUtil;
 
 import javax.inject.Inject;
@@ -33,6 +32,9 @@ public class VitalityOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
+        setLayer(OverlayLayer.ABOVE_SCENE);
+        setPosition(OverlayPosition.DYNAMIC);
+        setPriority(OverlayPriority.HIGH);
         Actor actor = plugin.getLocalPlayer();
 
         LocalPoint playerLocation = actor.getLocalLocation();

@@ -89,9 +89,9 @@ public class VitalityPlugin extends Plugin
 		//System.out.println("taken damage is: " + amount);
 		int current = getHealth();//client.getBoostedSkillLevel(Skill.HITPOINTS);
 		//System.out.println("current is: " + current);
-		if (amount < heals)
+		if (current < heals)
 		{
-			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,current-amount,client.getGameCycle()+32);
+			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,amount,client.getGameCycle()+32);
 			hitsplats.add(hurt);
 			client.playSoundEffect(5190);
 		}
@@ -124,7 +124,11 @@ public class VitalityPlugin extends Plugin
 		int current = client.getBoostedSkillLevel(Skill.HITPOINTS);
 
 		//region regen config
-		if (current-last == 1 && config.ignoreRegen())
+
+		int gloves = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.HANDS);
+		int difference = current - last;
+		boolean regen = (difference == 1) || (difference == 2 && gloves == 11133);
+		if (regen && config.ignoreRegen())
 		{
 			setHealth(current);
 			return;

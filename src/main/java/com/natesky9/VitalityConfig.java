@@ -63,7 +63,7 @@ public interface VitalityConfig extends Config
 	}
 	@ConfigItem(
 			keyName = "displayTickEat",
-			name = "Display Tickeats",
+			name = "Display Tickeats (experimental)",
 			description = "Show when an attack was tick ate",
 			section = generalSettings
 	)
