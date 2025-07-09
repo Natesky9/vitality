@@ -37,8 +37,7 @@ public class VitalityOverlay extends Overlay {
         setPriority(OverlayPriority.HIGH);
         Actor actor = plugin.getLocalPlayer();
 
-        LocalPoint playerLocation = actor.getLocalLocation();
-        LocalPoint location = new LocalPoint(playerLocation.getX(),playerLocation.getY());
+        LocalPoint location = actor.getLocalLocation();
 
         if (LocalDate.now().getDayOfMonth() == 1
                 && LocalDate.now().getMonth() == Month.APRIL
@@ -65,13 +64,15 @@ public class VitalityOverlay extends Overlay {
                 Hitsplat heal = plugin.healsplats.get(i);
                 BufferedImage image = drawHitsplat(heal,HEALSPLAT);
                 int offset = getAnchorPoint(actor);
-                Point point = actor.getCanvasImageLocation(image,actor.getLogicalHeight()-offset);
+                Point point = actor.getCanvasImageLocation(image,actor.getLogicalHeight());
                 int x = 0;
                 if (i == 1) x=20;
                 if (i == 2) x=-20;
                 int y = i > 0 ? 20:0;
                 if (config.healRise())
                     y += (heal.getDisappearsOnGameCycle()-client.getGameCycle())/10;
+                //shifting the offset to the last possible point in the stack should fix the visual bug?
+                y-= offset;
 
                 Point canvas = new Point(point.getX()-4-x, point.getY()-y);
                 OverlayUtil.renderImageLocation(graphics, canvas,image);

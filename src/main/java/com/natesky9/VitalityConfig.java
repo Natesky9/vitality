@@ -71,6 +71,16 @@ public interface VitalityConfig extends Config
 	{
 		return true;
 	}
+	@ConfigItem(
+			keyName = "TickEatSound",
+	name = "Sound ID (experimental)",
+	description = "Sound id for when an attack is successfully tick eaten. May return false positives. set to -1 to disable",
+	section = generalSettings
+	)
+	default int tickEatSound()
+	{
+		return 5190;
+	}
 
 	@ConfigItem(
 			keyName = "healRise",

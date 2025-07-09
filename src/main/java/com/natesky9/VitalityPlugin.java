@@ -93,7 +93,9 @@ public class VitalityPlugin extends Plugin
 		{
 			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,amount,client.getGameCycle()+32);
 			hitsplats.add(hurt);
-			client.playSoundEffect(5190);
+			int sound = config.tickEatSound();
+			if (sound != -1)
+				client.playSoundEffect(sound);
 		}
 	}
 	@Subscribe
