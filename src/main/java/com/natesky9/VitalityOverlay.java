@@ -39,6 +39,47 @@ public class VitalityOverlay extends Overlay {
 
         LocalPoint location = actor.getLocalLocation();
 
+        if (!plugin.healsplats.isEmpty())
+        {
+            for (int i=0;i<plugin.healsplats.size();i++)
+            {
+                //instead of drawing from the head down
+                //we draw from the feet up now
+                Hitsplat heal = plugin.healsplats.get(i);
+                BufferedImage image = drawHitsplat(heal,HEALSPLAT);
+                int offset = getAnchorPoint(actor);
+                //this doesn't seem to work
+                //int height = Perspective.getFootprintTileHeight(client,location,client.getTopLevelWorldView().getPlane(),0);
+                //shuffle the healsplats
+                int x = ((i+1) % 3)*20 - 20;
+                //if (i == 1) x=20;
+                //if (i == 2) x=-20;
+                int y = (i / 3)*20 + (i % 3 ==0 ? 0:10);
+                //int y = i > 0 ? 20:0;
+                if (config.healRise())
+                    offset -= (int)((heal.getDisappearsOnGameCycle()-client.getGameCycle()) * config.riseSpeed()*.1f);
+                //actor canvas image location doesn't seem to work since feet were invented
+                //Point point = actor.getCanvasImageLocation(image,offset);
+                Point point = Perspective.localToCanvas(client,location,client.getPlane(),offset);
+                //Point point = actor.getCanvasImageLocation(image,offset);//height+offset);
+                //shifting the offset to the last possible point in the stack should fix the visual bug?
+
+                Point canvas = new Point(point.getX()-16-x, point.getY()-y);
+                OverlayUtil.renderImageLocation(graphics, canvas,image);
+            }
+        }
+        if (!plugin.hitsplats.isEmpty())
+        {
+            Hitsplat dodge = plugin.hitsplats.get(0);
+            BufferedImage image = drawHitsplat(dodge,DODGE);
+            int offset = getAnchorPoint(actor);
+            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-offset);
+            int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
+            Point canvas = new Point(point.getX()+16-x,point.getY());
+            OverlayUtil.renderImageLocation(graphics,canvas,image);
+            //}
+        }
+
         if (LocalDate.now().getDayOfMonth() == 1
                 && LocalDate.now().getMonth() == Month.APRIL
                 && config.aprilFools() && !plugin.fools.isEmpty())
@@ -55,47 +96,6 @@ public class VitalityOverlay extends Overlay {
             if (client.getGameCycle() % 30 < 15)
                 OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
         }
-
-
-        if (!plugin.healsplats.isEmpty())
-        {
-            for (int i=0;i<plugin.healsplats.size();i++)
-            {
-                Hitsplat heal = plugin.healsplats.get(i);
-                BufferedImage image = drawHitsplat(heal,HEALSPLAT);
-                int offset = getAnchorPoint(actor);
-                Point point = actor.getCanvasImageLocation(image,actor.getLogicalHeight());
-                int x = 0;
-                if (i == 1) x=20;
-                if (i == 2) x=-20;
-                int y = i > 0 ? 20:0;
-                if (config.healRise())
-                    y += (heal.getDisappearsOnGameCycle()-client.getGameCycle())/10;
-                //shifting the offset to the last possible point in the stack should fix the visual bug?
-                y-= offset;
-
-                Point canvas = new Point(point.getX()-4-x, point.getY()-y);
-                OverlayUtil.renderImageLocation(graphics, canvas,image);
-            }
-        }
-        if (!plugin.hitsplats.isEmpty())
-        {
-            //int damage = 0;
-            //for (Hitsplat hitsplat: plugin.healsplats)
-            //{
-            //    damage += hitsplat.getAmount();
-            //}
-            //if (client.getBoostedSkillLevel(Skill.HITPOINTS) < damage)
-            //{
-            Hitsplat dodge = plugin.hitsplats.get(0);
-            BufferedImage image = drawHitsplat(dodge,DODGE);
-            int offset = getAnchorPoint(actor);
-            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-offset);
-            int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
-            Point canvas = new Point(point.getX()+16-x,point.getY());
-            OverlayUtil.renderImageLocation(graphics,canvas,image);
-            //}
-        }
         return null;
     }
     enum cardinal
@@ -109,9 +109,9 @@ public class VitalityOverlay extends Overlay {
     {
         switch (config.anchorPoints())
         {
-            case HEAD: return 0;
-            case CHEST: return actor.getLogicalHeight()/5;
-            default:return actor.getLogicalHeight();
+            case HEAD: return actor.getLogicalHeight();
+            case CHEST: return actor.getLogicalHeight()/2;
+            default:return 0;
         }
     }
     private BufferedImage drawHitsplat(Hitsplat hitsplat, ImageIcon imageIcon)

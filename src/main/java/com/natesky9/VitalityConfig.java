@@ -1,9 +1,6 @@
 package com.natesky9;
 
-import net.runelite.client.config.Config;
-import net.runelite.client.config.ConfigGroup;
-import net.runelite.client.config.ConfigItem;
-import net.runelite.client.config.ConfigSection;
+import net.runelite.client.config.*;
 
 @ConfigGroup("Vitality")
 public interface VitalityConfig extends Config
@@ -26,6 +23,7 @@ public interface VitalityConfig extends Config
 	@ConfigItem(
 			keyName = "anchorPoint",
 			name = "Anchor Point",
+			position = 2,
 			description = "Location to draw heal splats",
 			section = generalSettings
 	)
@@ -43,6 +41,7 @@ public interface VitalityConfig extends Config
 	@ConfigItem(
 			keyName = "ignoreRegen",
 			name = "Ignore Regeneration",
+			position = 3,
 			description = "Shows regeneration healing",
 			section = generalSettings
 	)
@@ -54,6 +53,7 @@ public interface VitalityConfig extends Config
 	@ConfigItem(
 			keyName = "excludeFood",
 			name = "Exclude Food",
+			position = 4,
 			description = "Ignore food/potion healing",
 			section = generalSettings
 	)
@@ -64,6 +64,7 @@ public interface VitalityConfig extends Config
 	@ConfigItem(
 			keyName = "displayTickEat",
 			name = "Display Tickeats (experimental)",
+			position = 5,
 			description = "Show when an attack was tick ate",
 			section = generalSettings
 	)
@@ -73,18 +74,20 @@ public interface VitalityConfig extends Config
 	}
 	@ConfigItem(
 			keyName = "TickEatSound",
-	name = "Sound ID (experimental)",
-	description = "Sound id for when an attack is successfully tick eaten. May return false positives. set to -1 to disable",
-	section = generalSettings
+			name = "Sound ID (experimental)",
+			position = 6,
+			description = "Sound id for when an attack is successfully tick eaten. May return false positives. set to -1 to disable",
+			section = generalSettings
 	)
 	default int tickEatSound()
 	{
 		return 5190;
 	}
-
+	//fun settings
 	@ConfigItem(
 			keyName = "healRise",
 			name = "Fancy Heal",
+			position = 0,
 			description = "Heal splat does a gentle rise",
 			section = funSettings
 	)
@@ -92,10 +95,26 @@ public interface VitalityConfig extends Config
 	{
 		return true;
 	}
+	@ConfigItem(
+			keyName = "riseSpeed",
+			name = "Rise Speed",
+			position = 1,
+			description = "How quickly the heal rises, or drops!",
+			section = funSettings
+	)
+	@Range(
+			min = -20,
+			max = 20
+	)
+	default int riseSpeed()
+	{
+		return 2;
+	}
 
 	@ConfigItem(
 			keyName = "healScaling",
 			name = "Scales with heal",
+			position = 2,
 			description = "Size scales with bigger heals",
 			section = funSettings
 	)
@@ -106,7 +125,8 @@ public interface VitalityConfig extends Config
 	@ConfigItem(
 			keyName = "aprilFools",
 			name = "April fools",
-			description = "enables fun",
+			position = 3,
+			description = "enables fun (only active one day a year)",
 			section = funSettings
 	)
 	default boolean aprilFools()

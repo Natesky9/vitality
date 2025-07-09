@@ -85,10 +85,7 @@ public class VitalityPlugin extends Plugin
 		{
 			heals += hitsplat.getAmount();
 		}
-		//System.out.println("healed damage is: " + heals);
-		//System.out.println("taken damage is: " + amount);
-		int current = getHealth();//client.getBoostedSkillLevel(Skill.HITPOINTS);
-		//System.out.println("current is: " + current);
+		int current = getHealth();
 		if (current < heals)
 		{
 			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,amount,client.getGameCycle()+32);
@@ -181,12 +178,12 @@ public class VitalityPlugin extends Plugin
 		//region debug code, comment out when done
 		//if (client.getGameCycle() % 40 < 10)
 		//{
-		//	Hitsplat heal1 = new Hitsplat(HitsplatID.HEAL,6,client.getGameCycle()+32);
-		//	healsplats.add(heal1);
-		//	Hitsplat heal2 = new Hitsplat(HitsplatID.HEAL,9,client.getGameCycle()+32);
-		//	healsplats.add(heal2);
-		//	Hitsplat heal3 = new Hitsplat(HitsplatID.HEAL,4,client.getGameCycle()+32);
-		//	healsplats.add(heal3);
+			//Hitsplat heal1 = new Hitsplat(HitsplatID.HEAL,6,client.getGameCycle()+32);
+			//healsplats.add(heal1);
+			//Hitsplat heal2 = new Hitsplat(HitsplatID.HEAL,9,client.getGameCycle()+32);
+			//healsplats.add(heal2);
+			//Hitsplat heal3 = new Hitsplat(HitsplatID.HEAL,4,client.getGameCycle()+32);
+			//healsplats.add(heal3);
 		//}
 		//endregion debug code
 
@@ -226,7 +223,6 @@ public class VitalityPlugin extends Plugin
 			}
 
 			setJokeTimer(getJokeTimer()+1);
-			//System.out.println(jokeTimer);
 
 			if (getJokeTimer() > 256 && getFools().size() < 5)
 			{
@@ -280,7 +276,6 @@ public class VitalityPlugin extends Plugin
 	}
 	void spawnFool()
 	{
-		//System.out.println("spawning mage");
 		SecretFeature fool = getSecretFeature();
 
 		int randomx = (int) (Math.random()*21-10)*128;
