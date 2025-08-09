@@ -176,15 +176,21 @@ public class VitalityPlugin extends Plugin
 	public void onGameTick(GameTick event)
 	{
 		//region debug code, comment out when done
-		//if (client.getGameCycle() % 40 < 10)
-		//{
+		if (client.getGameCycle() % 40 < 10)
+		{
 			//Hitsplat heal1 = new Hitsplat(HitsplatID.HEAL,6,client.getGameCycle()+32);
 			//healsplats.add(heal1);
 			//Hitsplat heal2 = new Hitsplat(HitsplatID.HEAL,9,client.getGameCycle()+32);
 			//healsplats.add(heal2);
 			//Hitsplat heal3 = new Hitsplat(HitsplatID.HEAL,4,client.getGameCycle()+32);
 			//healsplats.add(heal3);
-		//}
+			//Hitsplat heal4 = new Hitsplat(HitsplatID.HEAL,6,client.getGameCycle()+32);
+			//healsplats.add(heal4);
+			//Hitsplat heal5 = new Hitsplat(HitsplatID.HEAL,9,client.getGameCycle()+32);
+			//healsplats.add(heal5);
+			//Hitsplat heal6 = new Hitsplat(HitsplatID.HEAL,4,client.getGameCycle()+32);
+			//healsplats.add(heal6);
+		}
 		//endregion debug code
 
 		//region clear expired hitsplats

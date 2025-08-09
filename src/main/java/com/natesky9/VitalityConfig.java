@@ -29,14 +29,15 @@ public interface VitalityConfig extends Config
 	)
 	default AnchorPoints anchorPoints()
 	{
-		return AnchorPoints.CHEST;
+		return AnchorPoints.BELOW;
 	}
 
 	enum AnchorPoints
 	{
-		HEAD,
-		CHEST,
-		FEET
+		ABOVE,
+		BELOW,
+		LEFT,
+		RIGHT
 	}
 	@ConfigItem(
 			keyName = "ignoreRegen",
@@ -103,7 +104,7 @@ public interface VitalityConfig extends Config
 			section = funSettings
 	)
 	@Range(
-			min = -20,
+			min = 0,
 			max = 20
 	)
 	default int riseSpeed()
