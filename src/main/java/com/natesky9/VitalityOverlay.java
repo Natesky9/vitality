@@ -53,15 +53,18 @@ public class VitalityOverlay extends Overlay {
                 int offset = 0;
                 if (config.healRise())
                     offset -= ((heal.getDisappearsOnGameCycle()-client.getGameCycle()));
-                int x = i*getAnchorPointX()*25 + (int)(offset * getAnchorPointX() * config.riseSpeed()/20F);
-                int y = i*getAnchorPointY()*25 + (int)(offset * getAnchorPointY() * config.riseSpeed()/20F);
+                //x isn't necessary if the hit splat should always rise per config.healRise() description
+                //int x = i*getAnchorPointX()*25 + (int)(offset * -1 * config.riseSpeed()/20F);
+                int y = i*getAnchorPointY()*25 + (int)(offset * -1 * config.riseSpeed()/20F);
                 //actor canvas image location doesn't seem to work since feet were invented
                 //Point point = actor.getCanvasImageLocation(image,offset);
                 Point point = Perspective.localToCanvas(client,location,client.getPlane(),64+32);
                 //Point point = actor.getCanvasImageLocation(image,offset);//height+offset);
                 int aX = getAnchorPointX()*25;
                 int aY = getAnchorPointY()*25;
-                Point canvas = new Point(point.getX()-20+x+aX,point.getY()+y-37+aY);
+                //remove x from calculation so hit splat always rises
+                //Point canvas = new Point(point.getX()-20+x+aX,point.getY()+y-37+aY);
+                Point canvas = new Point(point.getX()-20+aX,point.getY()+y-37+aY);
                 //Point canvas = new Point(point.getX()-16-x, point.getY()-y-32);
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
             }
