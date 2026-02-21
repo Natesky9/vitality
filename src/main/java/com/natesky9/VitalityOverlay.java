@@ -70,9 +70,9 @@ public class VitalityOverlay extends Overlay {
         {
             Hitsplat dodge = plugin.hitsplats.get(0);
             BufferedImage image = drawHitsplat(dodge,DODGE);
-            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-62+35);
+            Point point = Perspective.localToCanvas(client,location,client.getPlane(),64+32);
             int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
-            Point canvas = new Point(point.getX()+16-x,point.getY());
+            Point canvas = new Point(point.getX()+16-x,point.getY()-37);
             OverlayUtil.renderImageLocation(graphics,canvas,image);
             //}
         }
