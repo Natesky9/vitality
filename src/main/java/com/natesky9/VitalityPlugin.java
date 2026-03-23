@@ -97,7 +97,6 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
-		System.out.println(event.getKey());
 		if (event.getKey().equals("aprilFools1") && config.aprilFools2() && config.aprilFools3() && config.aprilFools4()
 				&& config.aprilFools5() && Objects.equals(event.getNewValue(), "false"))
 			clientThread.invoke(new ChatRunnable(client,"<col=ff0000>To disable the april fools feature, all boxes must be unchecked</col=ff0000>"));
@@ -232,7 +231,6 @@ public class VitalityPlugin extends Plugin
 				if (change.getStat() == Stats.HITPOINTS)
 				{
 					if (dupeFlag) continue;
-					System.out.println("setting hp to " + (client.getBoostedSkillLevel(Skill.HITPOINTS)));
 					setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
 					Hitsplat fresh = new Hitsplat(HitsplatID.HEAL,value,client.getGameCycle()+32);
 					if (!config.excludeFood())
@@ -354,7 +352,6 @@ public class VitalityPlugin extends Plugin
 			//add healsplat
 			if (currentHealth > getPreviousHealth())
 			{
-				System.out.println("processing passive heal");
 				//add a blacklist for existing heals
 				//so that there isn't double heals
 				//edit: not needed since we update the hp

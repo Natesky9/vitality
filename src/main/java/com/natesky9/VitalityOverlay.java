@@ -2,8 +2,6 @@ package com.natesky9;
 
 import net.runelite.api.*;
 import net.runelite.api.Point;
-import net.runelite.api.coords.LocalPoint;
-import net.runelite.client.RuneLite;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.ImageUtil;
@@ -12,8 +10,6 @@ import javax.inject.Inject;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.time.LocalDate;
-import java.time.Month;
 
 
 public class VitalityOverlay extends Overlay {
@@ -51,12 +47,6 @@ public class VitalityOverlay extends Overlay {
                 BufferedImage image = drawHitsplat(heal,HEALSPLAT);
                 Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
                 Point canvas = new Point(point.getX()+xOffset(i)-6,point.getY()+yOffset(i));
-                //int x = i*getAnchorPointX()*25 + getAnchorPointX();
-                //int y = i*getAnchorPointY()*25 + getAnchorPointY();
-                //Point point = Perspective.localToCanvas(client,location,client.getPlane(),64+32);
-                //int aX = getAnchorPointX()*25;
-                //int aY = getAnchorPointY()*25;
-                //Point canvas = new Point(point.getX()-20+x+aX,point.getY()+y-37+aY);
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
             }
         }
@@ -93,23 +83,6 @@ public class VitalityOverlay extends Overlay {
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
             }
         }
-
-        //april fools
-        //if (LocalDate.now().getDayOfMonth() == 1
-        //        && LocalDate.now().getMonth() == Month.APRIL
-        //        && config.aprilFools() && !plugin.secretFeature.fools.isEmpty())
-        //{
-        //    Hitsplat joke = new Hitsplat(HitsplatID.DAMAGE_ME_POISE,
-        //            (int) (Math.random()*99),client.getGameCycle()+16);
-        //    BufferedImage fool = drawHitsplat(joke,APRIL);
-        //    Point point = Perspective.getCanvasImageLocation(client,location,fool,62+35);
-        //    int x = (((client.getGameCycle() % 120) / 30)-1) % 2;
-        //    x *= 16;
-        //    int y = ((((client.getGameCycle()+30) % 120) / 30)-1) % 2;
-        //    y *= 16;
-        //    if (client.getGameCycle() % 30 < 15)
-        //        OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
-        //}
         return null;
     }
     public int xOffset(int index)

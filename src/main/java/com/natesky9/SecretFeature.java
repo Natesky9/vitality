@@ -21,8 +21,6 @@ public class SecretFeature {
 
     private Animation IDLE;
     private Animation ATTACK;
-    private ModelData[] data;
-    private ModelData modelData;
     private Model model;
 
     @Getter @Setter
@@ -38,7 +36,7 @@ public class SecretFeature {
     {
         IDLE = client.loadAnimation(AnimationID.IDLE);
         ATTACK = client.loadAnimation(AnimationID.CRAFTING_BATTLESTAVES);
-        data = new ModelData[]
+        ModelData[] data = new ModelData[]
                 {
                         client.loadModelData(31794),
                         client.loadModelData(214),
@@ -51,7 +49,7 @@ public class SecretFeature {
                         client.loadModelData(31911),
                         client.loadModelData(31889),
                 };
-        modelData = client.mergeModels(data);
+        ModelData modelData = client.mergeModels(data);
         model = modelData.light();
         setFools(new ArrayList<>());
         setJokeTile(client.getLocalPlayer().getWorldLocation());
@@ -79,8 +77,6 @@ public class SecretFeature {
                 setJokeTile(client.getLocalPlayer().getWorldLocation());
                 setLastMage(null);
             }
-
-
             setJokeTimer(getJokeTimer()+1);
 
             if (getJokeTimer() > 100 && getFools().size() < 5)
@@ -102,7 +98,6 @@ public class SecretFeature {
     }
     RuneLiteObject spawnFool()
     {
-
         client.addChatMessage(ChatMessageType.GAMEMESSAGE,"vitality","<col=42F527>April Fools! To disable brassica mages, " +
                 "go to the settings of the plugin</col=42F527> <col=ff0000>Vitality</col=ff0000>","");
         int randomx = (int) (Math.random()*21-10)*128;
@@ -113,15 +108,12 @@ public class SecretFeature {
         boolean see = client.getLocalPlayer().getWorldArea().hasLineOfSightTo(client.getTopLevelWorldView(),worldPoint);
         boolean tooClose = client.getLocalPlayer().getLocalLocation().distanceTo(local) < 256;
 
-        //NPCComposition composition = client.getNpcDefinition(7310);
-        //int[] modelIDS = new int[]{31794, 214, 250, 31805, 31797, 177, 31783, 181, 31911, 31889};
+        //{31794, 214, 250, 31805, 31797, 177, 31783, 181, 31911, 31889};
 
         RuneLiteObject mage = client.createRuneLiteObject();
         mage.setModel(getBrassica());
         mage.setAnimation(IDLE);
         mage.setLocation(local,0);
-        //client.getLocalPlayer().setOverheadText("April Fools!");
-        //client.getLocalPlayer().setOverheadCycle(200);
 
         mage.setActive(true);
         getFools().add(mage);
@@ -160,7 +152,7 @@ public class SecretFeature {
                 client.getGameCycle(), client.getGameCycle()+40,
                 0,0,0,
                 client.getLocalPlayer(), client.getLocalPlayer().getWorldLocation().getX(),client.getLocalPlayer().getWorldLocation().getY());
-        //System.out.println("my cabbages!");
+        //My cabbages!
         client.getProjectiles().addLast(projectile);
         if (true)//lastMage != null && canSee(lastMage))
         {
