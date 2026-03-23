@@ -3,6 +3,7 @@ package com.natesky9;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.api.coords.LocalPoint;
+import net.runelite.client.RuneLite;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.ImageUtil;
@@ -14,6 +15,7 @@ import java.awt.image.BufferedImage;
 import java.time.LocalDate;
 import java.time.Month;
 
+
 public class VitalityOverlay extends Overlay {
     private static final Class<?> PLUGIN_CLASS = VitalityPlugin.class;
     public static final ImageIcon HEALSPLAT = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
@@ -22,6 +24,8 @@ public class VitalityOverlay extends Overlay {
             "/dodge.png"));
     public static final ImageIcon APRIL = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
             "/cabbage.png"));
+    public static final ImageIcon PRAYER = new ImageIcon(ImageUtil.loadImageResource(PLUGIN_CLASS,
+            "/prayer.png"));
 
     @Inject
     private VitalityPlugin plugin;
@@ -32,12 +36,10 @@ public class VitalityOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
-        setLayer(OverlayLayer.ALWAYS_ON_TOP);
+        setLayer(OverlayLayer.UNDER_WIDGETS);
         setPosition(OverlayPosition.DYNAMIC);
         setPriority(OverlayPriority.HIGH);
         Actor actor = plugin.getLocalPlayer();
-
-        LocalPoint location = actor.getLocalLocation();
 
         if (!plugin.healsplats.isEmpty())
         {
@@ -47,22 +49,14 @@ public class VitalityOverlay extends Overlay {
                 //we draw from the feet up now
                 Hitsplat heal = plugin.healsplats.get(i);
                 BufferedImage image = drawHitsplat(heal,HEALSPLAT);
-                //shuffle the healsplats
-                //int x = ((i+1) % 3)*20 - 20;
-                //int y = (i / 3)*20 + (i % 3 ==0 ? 0:10);
-                int offset = 0;
-                if (config.healRise())
-                    offset -= ((heal.getDisappearsOnGameCycle()-client.getGameCycle()));
-                int x = i*getAnchorPointX()*25 + (int)(offset * getAnchorPointX() * config.riseSpeed()/20F);
-                int y = i*getAnchorPointY()*25 + (int)(offset * getAnchorPointY() * config.riseSpeed()/20F);
-                //actor canvas image location doesn't seem to work since feet were invented
-                //Point point = actor.getCanvasImageLocation(image,offset);
-                Point point = Perspective.localToCanvas(client,location,client.getPlane(),64+32);
-                //Point point = actor.getCanvasImageLocation(image,offset);//height+offset);
-                int aX = getAnchorPointX()*25;
-                int aY = getAnchorPointY()*25;
-                Point canvas = new Point(point.getX()-20+x+aX,point.getY()+y-37+aY);
-                //Point canvas = new Point(point.getX()-16-x, point.getY()-y-32);
+                Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
+                Point canvas = new Point(point.getX()+xOffset(i)-6,point.getY()+yOffset(i));
+                //int x = i*getAnchorPointX()*25 + getAnchorPointX();
+                //int y = i*getAnchorPointY()*25 + getAnchorPointY();
+                //Point point = Perspective.localToCanvas(client,location,client.getPlane(),64+32);
+                //int aX = getAnchorPointX()*25;
+                //int aY = getAnchorPointY()*25;
+                //Point canvas = new Point(point.getX()-20+x+aX,point.getY()+y-37+aY);
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
             }
         }
@@ -76,59 +70,123 @@ public class VitalityOverlay extends Overlay {
             OverlayUtil.renderImageLocation(graphics,canvas,image);
             //}
         }
-
-        if (LocalDate.now().getDayOfMonth() == 1
-                && LocalDate.now().getMonth() == Month.APRIL
-                && config.aprilFools() && !plugin.fools.isEmpty())
+        if (!plugin.prayersplats.isEmpty())
         {
-            Hitsplat joke = new Hitsplat(HitsplatID.DAMAGE_ME_POISE,
-                    (int) (Math.random()*99),client.getGameCycle()+16);
-            BufferedImage fool = drawHitsplat(joke,APRIL);
-            Point point = Perspective.getCanvasImageLocation(client,location,fool,62+35);
-            int x = (((client.getGameCycle() % 120) / 30)-1) % 2;
-            x *= 16;
-            int y = ((((client.getGameCycle()+30) % 120) / 30)-1) % 2;
-            y *= 16;
-            if (client.getGameCycle() % 30 < 15)
-                OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
+            Hitsplat prayer = plugin.prayersplats.get(0);
+            BufferedImage image = drawPrayersplat(prayer,PRAYER);
+
+            //don't know why this doesn't line up right
+            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
+            Point canvas = new Point(point.getX()-6,point.getY()-60);
+            //draw the single prayer splat above the top hitsplat
+            OverlayUtil.renderImageLocation(graphics,canvas,image);
+            //}
         }
+        if (!plugin.secretsplats.isEmpty())
+        {
+            for (int i=0;i<plugin.secretsplats.size();i++)
+            {
+                Hitsplat heal = plugin.secretsplats.get(i);
+                BufferedImage image = drawHitsplat(heal,APRIL);
+                Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
+                Point canvas = new Point(point.getX()+xOffset(i)-6,point.getY()+yOffset(i)-40);
+                OverlayUtil.renderImageLocation(graphics, canvas,image);
+            }
+        }
+
+        //april fools
+        //if (LocalDate.now().getDayOfMonth() == 1
+        //        && LocalDate.now().getMonth() == Month.APRIL
+        //        && config.aprilFools() && !plugin.secretFeature.fools.isEmpty())
+        //{
+        //    Hitsplat joke = new Hitsplat(HitsplatID.DAMAGE_ME_POISE,
+        //            (int) (Math.random()*99),client.getGameCycle()+16);
+        //    BufferedImage fool = drawHitsplat(joke,APRIL);
+        //    Point point = Perspective.getCanvasImageLocation(client,location,fool,62+35);
+        //    int x = (((client.getGameCycle() % 120) / 30)-1) % 2;
+        //    x *= 16;
+        //    int y = ((((client.getGameCycle()+30) % 120) / 30)-1) % 2;
+        //    y *= 16;
+        //    if (client.getGameCycle() % 30 < 15)
+        //        OverlayUtil.renderImageLocation(graphics, new Point(point.getX()-x-4, point.getY()-y),fool);
+        //}
         return null;
     }
-    enum cardinal
+    public int xOffset(int index)
     {
-        north,
-        east,
-        south,
-        west
-    }
-    public int getAnchorPointX()
-    {
-        switch (config.anchorPoints())
+        switch (index)
         {
-            case LEFT: return -1;
-            case RIGHT: return 1;
-            default: return 0;
-
+            case 0:
+            case 5:
+                return 0;
+            case 1:
+            case 3:
+            case 6:
+                return -20;
+            case 2:
+            case 4:
+            case 7:
+                return 20;
         }
+        return 0;
     }
-    public int getAnchorPointY()
+    public int yOffset(int index)
     {
-        switch (config.anchorPoints())
+        switch (index)
         {
-            case ABOVE: return -1;
-            case BELOW: return 1;
-            default: return 0;
+            case 1:
+            case 2:
+                return 25;
+            case 0:
+                return 40;
+            case 3:
+            case 4:
+                return 55;
+            case 5:
+                return 70;
+            case 6:
+            case 7:
+                return 85;
         }
+        return 10;
     }
+    //depreciated
+    //public int getAnchorPointX()
+    //{
+    //    switch (config.anchorPoints())
+    //    {
+    //        case LEFT: return -1;
+    //        case RIGHT: return 1;
+    //        default: return 0;
+    //    }
+    //}
+    //depreciated
+    //public int getAnchorPointY()
+    //{
+    //    switch (config.anchorPoints())
+    //    {
+    //        case ABOVE: return -1;
+    //        case BELOW: return 1;
+    //        default: return 0;
+    //    }
+    //}
     private BufferedImage drawHitsplat(Hitsplat hitsplat, ImageIcon imageIcon)
     {
         BufferedImage bi = iconToBuffered(hitsplat, imageIcon);
         Graphics g = bi.getGraphics();
-        bi = drawCenteredDamageNumbers(g, hitsplat, bi);
+        bi = drawCenteredDamageNumbers(g, hitsplat, bi, false);
         g.dispose();
         return bi;
     }
-    public BufferedImage drawCenteredDamageNumbers(Graphics g, Hitsplat hitsplat, BufferedImage bi)
+    private BufferedImage drawPrayersplat(Hitsplat hitsplat, ImageIcon imageIcon)
+    {
+        BufferedImage bi = prayerToBuffered(hitsplat, imageIcon);
+        Graphics g = bi.getGraphics();
+        bi = drawCenteredDamageNumbers(g, hitsplat, bi, true);
+        g.dispose();
+        return bi;
+    }
+    public BufferedImage drawCenteredDamageNumbers(Graphics g, Hitsplat hitsplat, BufferedImage bi, boolean inverted)
     {
         String text = String.valueOf(hitsplat.getAmount());
         int value = hitsplat.getAmount();
@@ -140,10 +198,32 @@ public class VitalityOverlay extends Overlay {
         int x = (bi.getWidth() - metrics.stringWidth(text)) /2;
         int y = ((bi.getHeight() - metrics.getHeight())/2) + metrics.getAscent();
         g.setFont(font);
-        g.setColor(Color.BLACK);
-        g.drawString(text,x+1,y+1);
-        g.setColor(Color.WHITE);
+
+        //inverted flag for black text on white or white text on black
+        g.setColor(!inverted ? Color.BLACK:Color.GRAY);
+        //if (!inverted)
+            g.drawString(text,x+1,y+1);
+        g.setColor(!inverted ? Color.WHITE:Color.BLACK);
         g.drawString(text,x,y);
+        return bi;
+    }
+    private BufferedImage prayerToBuffered(Hitsplat hitsplat, ImageIcon icon)
+    {
+        Image image = icon.getImage();
+        int height = icon.getIconHeight();
+        int width = icon.getIconWidth();
+        Image tempImage;
+
+        tempImage = image.getScaledInstance(width,height,Image.SCALE_SMOOTH);
+        ImageIcon sizedImageIcon = new ImageIcon(tempImage);
+
+        BufferedImage bi = new BufferedImage(
+                sizedImageIcon.getIconWidth(),
+                sizedImageIcon.getIconHeight(),
+                BufferedImage.TYPE_INT_ARGB);
+        Graphics g = bi.createGraphics();
+        sizedImageIcon.paintIcon(null, g, 0, 0);
+        g.dispose();
         return bi;
     }
     private BufferedImage iconToBuffered(Hitsplat hitsplat, ImageIcon icon)
@@ -158,9 +238,9 @@ public class VitalityOverlay extends Overlay {
 
         Image tempImage;
 
-        if (icon == APRIL)
-            tempImage = image.getScaledInstance(width/3, height/3, Image.SCALE_SMOOTH);
-        else
+        //if (icon == APRIL)
+        //    tempImage = image.getScaledInstance(width/3, height/3, Image.SCALE_SMOOTH);
+        //else
             tempImage = image.getScaledInstance(width*scale,height*scale,Image.SCALE_SMOOTH);
         ImageIcon sizedImageIcon = new ImageIcon(tempImage);
 
