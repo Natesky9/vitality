@@ -152,19 +152,23 @@ public class VitalityPlugin extends Plugin
 				//every dose of the surge potion
 				text.append("<col=ff0000>When consumed:</col>");
 				text.append(" Special attack + 25");
-				return;
+				break;
+			}
+			default:
+			{
+				Effect effect = service.getItemStatChanges(item);
+				if (effect == null) return;
+				StatChange[] stats = effect.calculate(client).getStatChanges();
+				text.append("<col=ff0000>When consumed:</col>");
+				for (StatChange stat:stats)
+				{
+					text.append(" ").append(stat.getStat().getName()).append(" ");
+					text.append(stat.getFormattedTheoretical());
+				}
+				break;
 			}
 		}
-
-		Effect effect = service.getItemStatChanges(item);
-		if (effect == null) return;
-		StatChange[] stats = effect.calculate(client).getStatChanges();
-		text.append("<col=ff0000>When consumed:</col>");
-		for (StatChange stat:stats)
-		{
-			text.append(" ").append(stat.getStat().getName()).append(" ");
-            text.append(stat.getFormattedRelative());
-		}
+		client.addChatMessage(ChatMessageType.ENGINE,"Vitality",text.toString(),"");
 	}
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied applied)
@@ -195,14 +199,8 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged changed)
 	{
-		if (localPlayer.getAnimation() != AnimationID.CONSUMING)
-			return;
-		if (config.excludeFood())
-		{
 			setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
 			setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
-			return;
-		}
 
 		int inventory = changed.getContainerId();
 		//early exit if not the player inventory
@@ -220,6 +218,8 @@ public class VitalityPlugin extends Plugin
 		List<Integer> modified = Arrays.stream(items).map(Item::getId).collect(Collectors.toList());
 		Arrays.stream(current).forEach(modified::remove);
 
+		//only process one heal per item, like in the case for antelope
+		boolean dupeFlag = false;
 		for (Integer item:modified)
 		{
 			Effect effect = service.getItemStatChanges(item);
@@ -231,11 +231,14 @@ public class VitalityPlugin extends Plugin
 
 				if (change.getStat() == Stats.HITPOINTS)
 				{
+					if (dupeFlag) continue;
+					System.out.println("setting hp to " + (client.getBoostedSkillLevel(Skill.HITPOINTS)));
+					setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
 					Hitsplat fresh = new Hitsplat(HitsplatID.HEAL,value,client.getGameCycle()+32);
 					if (!config.excludeFood())
 						healsplats.add(fresh);
 					//double check this triggers after stat changes
-					setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+					dupeFlag = true;
 				}
 				if (change.getStat() == Stats.PRAYER)
 				{
@@ -273,8 +276,8 @@ public class VitalityPlugin extends Plugin
 		Skill skill = event.getSkill();
 
 		//because statChanged happens before containerChanged
-		//we need this duplicate check to pass
-		if (config.excludeFood() && localPlayer.getAnimation() == AnimationID.CONSUMING)
+		//we need to filter out eating
+		if (localPlayer.getAnimation() == AnimationID.CONSUMING)
 		{
 			setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
 			setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
@@ -351,6 +354,7 @@ public class VitalityPlugin extends Plugin
 			//add healsplat
 			if (currentHealth > getPreviousHealth())
 			{
+				System.out.println("processing passive heal");
 				//add a blacklist for existing heals
 				//so that there isn't double heals
 				//edit: not needed since we update the hp
