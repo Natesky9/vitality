@@ -69,6 +69,8 @@ public class SecretFeature {
     }
     public void gameTick()
     {
+        //client might not exist yet
+        if (client.getLocalPlayer() == null) return;
         setJokeTile(client.getLocalPlayer().getWorldLocation());
         if (!plugin.secret && LocalDate.now().getDayOfMonth() == 1 && LocalDate.now().getMonth() == Month.APRIL)
         {
@@ -83,7 +85,7 @@ public class SecretFeature {
             }
             setJokeTimer(getJokeTimer()+1);
 
-            if (getJokeTimer() > 1 && getFools().size() < 5)
+            if (getJokeTimer() > 180 && getFools().size() < 5)
             {
                 RuneLiteObject mage = spawnFool();
                 if (mage != null)
