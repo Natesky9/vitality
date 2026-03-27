@@ -1,5 +1,6 @@
 package com.natesky9;
 
+import com.natesky9.Hitsplats.SecretSplat;
 import lombok.Getter;
 import lombok.Setter;
 import net.runelite.api.*;
@@ -17,7 +18,8 @@ public class SecretFeature {
     private Client client;
     @Inject
     private VitalityPlugin plugin;
-    @Inject VitalityConfig config;
+    @Inject
+    VitalityConfig config;
 
     private Animation IDLE;
     private Animation ATTACK;
@@ -57,7 +59,8 @@ public class SecretFeature {
     }
     public void tick()
     {
-
+        //client might not exist yet
+        if (client.getLocalPlayer() == null) return;
         for (RuneLiteObject brassica:fools)
         {
             int angle = findAngle(brassica.getLocation());
@@ -66,7 +69,8 @@ public class SecretFeature {
     }
     public void gameTick()
     {
-        if (LocalDate.now().getDayOfMonth() == 1 && LocalDate.now().getMonth() == Month.APRIL && plugin.secret)
+        setJokeTile(client.getLocalPlayer().getWorldLocation());
+        if (!plugin.secret && LocalDate.now().getDayOfMonth() == 1 && LocalDate.now().getMonth() == Month.APRIL)
         {
             //reset if player moves or has any animation
             if (client.getLocalPlayer().getWorldLocation().getX() != getJokeTile().getX()
@@ -75,30 +79,28 @@ public class SecretFeature {
             {
                 setJokeTimer(0);
                 setJokeTile(client.getLocalPlayer().getWorldLocation());
-                setLastMage(null);
+                //setLastMage(null);
             }
             setJokeTimer(getJokeTimer()+1);
 
-            if (getJokeTimer() > 100 && getFools().size() < 5)
+            if (getJokeTimer() > 1 && getFools().size() < 5)
             {
                 RuneLiteObject mage = spawnFool();
                 if (mage != null)
                 {
                     setLastMage(mage);
-                    return;
                 }
             }
 
-            if (getFools().size() > 1)
-            {
-                Collections.shuffle(fools);
-                spawnCabbage();
-            }
+            Collections.shuffle(fools);
+            spawnCabbage();
         }
+        setJokeTile(client.getLocalPlayer().getWorldLocation());
     }
     RuneLiteObject spawnFool()
     {
-        client.addChatMessage(ChatMessageType.GAMEMESSAGE,"vitality","<col=42F527>April Fools! To disable brassica mages, " +
+        if (fools.isEmpty())
+            client.addChatMessage(ChatMessageType.GAMEMESSAGE,"vitality","<col=42F527>April Fools! To disable brassica mages, " +
                 "go to the settings of the plugin</col=42F527> <col=ff0000>Vitality</col=ff0000>","");
         int randomx = (int) (Math.random()*21-10)*128;
         int randomy = (int) (Math.random()*21-10)*128;
@@ -130,7 +132,6 @@ public class SecretFeature {
             test.setStartCycle(test.getStartCycle()+1);
             if (test == lastMage)
             {
-                lastMage = null;
                 continue;
             }
             if (!canSee(test))
@@ -141,7 +142,10 @@ public class SecretFeature {
             }
             actor = fools.get(i);
         }
-        if (actor == null) return;
+        if (actor == null)
+        {
+            return;
+        }
 
         client.playSoundEffect(SoundEffectID.PICK_PLANT_BLOOP);
 
@@ -154,10 +158,10 @@ public class SecretFeature {
                 client.getLocalPlayer(), client.getLocalPlayer().getWorldLocation().getX(),client.getLocalPlayer().getWorldLocation().getY());
         //My cabbages!
         client.getProjectiles().addLast(projectile);
-        if (true)//lastMage != null && canSee(lastMage))
+        if (getLastMage() != null && canSee(getLastMage()))
         {
-            int value = (int) (Math.random()*50);
-            Hitsplat fresh = new Hitsplat(HitsplatID.HEAL,value,client.getGameCycle()+80);
+            int value = (int) (Math.random()*50)+10;
+            SecretSplat fresh = new SecretSplat(value,client.getGameCycle()+80);
             plugin.secretsplats.add(fresh);
         }
 
@@ -168,7 +172,7 @@ public class SecretFeature {
         }
         actor.setAnimation(ATTACK);
 
-        if (client.getLocalPlayer().getLocalLocation().distanceTo(actor.getLocation()) > 128*10)
+        if (client.getLocalPlayer().getLocalLocation().distanceTo(actor.getLocation()) > 128*11)
         {//despawn mechanic
             despawnCabbage(actor);
         }
@@ -177,7 +181,8 @@ public class SecretFeature {
     }
     void despawnCabbage(RuneLiteObject actor)
     {
-        actor.setActive(false);
+        client.removeRuneLiteObject(actor);
+        //actor.setActive(false);
         getFools().remove(actor);
     }
     boolean canSee(RuneLiteObject actor)

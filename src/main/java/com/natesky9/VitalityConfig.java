@@ -147,9 +147,9 @@ public interface VitalityConfig extends Config
 	//region aprilFools1
 	@ConfigItem(
 			keyName = "aprilFools1",
-			name = "Reticulate Splines",
+			name = "Enable April Fools",
 			position = 1,
-			description = "enables fun (only active one day a year)",
+			description = "Enables the april fools feature (read your chatbox after unchecking)",
 			section = funSettings
 	)
 	default boolean aprilFools1()
@@ -162,7 +162,7 @@ public interface VitalityConfig extends Config
 			keyName = "aprilFools2",
 			name = "Pet the dog for luck",
 			position = 2,
-			description = "this doesn't actually give luck unfortunately. But if it did, amazing!",
+			description = "This doesn't actually give luck unfortunately. But if it did, amazing!",
 			section = funSettings
 	)
 	default boolean aprilFools2()

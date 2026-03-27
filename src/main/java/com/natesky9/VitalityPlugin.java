@@ -3,6 +3,9 @@ package com.natesky9;
 import com.google.inject.Provides;
 import javax.inject.Inject;
 
+import com.natesky9.Hitsplats.HealSplat;
+import com.natesky9.Hitsplats.RestoreSplat;
+import com.natesky9.Hitsplats.SecretSplat;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +71,6 @@ public class VitalityPlugin extends Plugin
 	}
 	@Getter @Setter
 	public int previousHealth = 255;
-	//check whether this is needed with the new system
 	@Getter @Setter
 	public int previousPrayer = 255;
 	@Getter @Setter
@@ -79,11 +81,11 @@ public class VitalityPlugin extends Plugin
 	@Getter @Setter
 	public ArrayList<Hitsplat> hitsplats;
 	@Getter @Setter
-	public ArrayList<Hitsplat> healsplats;
+	public ArrayList<HealSplat> healsplats;
 	@Getter @Setter
-	public ArrayList<Hitsplat> prayersplats;
+	public ArrayList<RestoreSplat> prayersplats;
 	@Getter @Setter
-	public ArrayList<Hitsplat> secretsplats;
+	public ArrayList<SecretSplat> secretsplats;
 	@Getter @Setter
 	public Item[] items;
 
@@ -121,14 +123,15 @@ public class VitalityPlugin extends Plugin
 		if (event.getKey().equals("TickEatSound") && !config.aprilFools1() && config.aprilFools2()
 				&& !config.aprilFools3() && !config.aprilFools4() && config.aprilFools5())
 			clientThread.invoke(new ChatRunnable(client,"Have you tried turning <col=ff0000>two off and on</col=ff0000> again?"));
-		if (event.getKey().equals("aprilFools2") && Objects.equals(event.getNewValue(), "true")
-				&& !config.aprilFools1() && !config.aprilFools3() && !config.aprilFools4() && config.aprilFools5())
-			clientThread.invoke(new ChatRunnable(client,"<col=ff0000>You have successfully disabled Vitality's april fools feature. Have a nice day!</col=ff0000>"));
-
-		setSecret(config.aprilFools1() && !config.aprilFools2() && config.aprilFools3()
-				&& config.aprilFools4() && !config.aprilFools5());
-		if (!secret)
-			secretFeature.fools.clear();
+		setSecret(!config.aprilFools1() && config.aprilFools2() && !config.aprilFools3()
+				&& !config.aprilFools4() && config.aprilFools5());
+		if (secret)
+		{
+			clientThread.invoke(new ClientSecretDisable(secretFeature));
+			if (event.getKey().equals("aprilFools2") && Objects.equals(event.getNewValue(), "true")
+					&& !config.aprilFools1() && !config.aprilFools3() && !config.aprilFools4() && config.aprilFools5())
+				clientThread.invoke(new ChatRunnable(client,"<col=ff0000>You have successfully disabled Vitality's april fools feature. Have a nice day!</col=ff0000>"));
+		}
 	}
 	@Subscribe
 	public void onMenuOptionClicked(MenuOptionClicked event)
@@ -174,26 +177,26 @@ public class VitalityPlugin extends Plugin
 	{
 		if (!config.displayTickEat()) return;
 
-		Hitsplat hit = applied.getHitsplat();
-		if (!hit.isMine()) return;
-		int amount = hit.getAmount();
-		if (amount == 0) return;
-		if (hit.getHitsplatType() != HitsplatID.DAMAGE_ME) return;
-
-		int heals = 0;
-		for (Hitsplat hitsplat: healsplats)
-		{
-			heals += hitsplat.getAmount();
-		}
-		int current = getPreviousHealth();
-		if (current < heals)
-		{
-			Hitsplat hurt = new Hitsplat(HitsplatID.DAMAGE_ME,amount,client.getGameCycle()+32);
-			hitsplats.add(hurt);
-			int sound = config.tickEatSound();
-			if (sound != -1)
-				client.playSoundEffect(sound);
-		}
+		//disabled until tickeats are figured out
+		//Hitsplat hit = applied.getHitsplat();
+		//if (!hit.isMine()) return;
+		//int amount = hit.getAmount();
+		//if (amount == 0) return;
+		//if (hit.getHitsplatType() != HitsplatID.DAMAGE_ME) return;
+		//int heals = 0;
+		//for (Hitsplat hitsplat: healsplats)
+		//{
+		//	heals += hitsplat.getAmount();
+		//}
+		//int current = getPreviousHealth();
+		//if (current < heals)
+		//{
+		//	Hitsplat hurt = new HealSplat(amount,client.getGameCycle()+32);
+		//	hitsplats.add(hurt);
+		//	int sound = config.tickEatSound();
+		//	if (sound != -1)
+		//		client.playSoundEffect(sound);
+		//}
 	}
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged changed)
@@ -232,7 +235,7 @@ public class VitalityPlugin extends Plugin
 				{
 					if (dupeFlag) continue;
 					setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
-					Hitsplat fresh = new Hitsplat(HitsplatID.HEAL,value,client.getGameCycle()+32);
+					HealSplat fresh = new HealSplat(value,client.getGameCycle()+32);
 					if (!config.excludeFood())
 						healsplats.add(fresh);
 					//double check this triggers after stat changes
@@ -241,7 +244,7 @@ public class VitalityPlugin extends Plugin
 				if (change.getStat() == Stats.PRAYER)
 				{
 					//add to prayer splat
-					Hitsplat fresh = new Hitsplat(HitsplatID.CYAN_UP,value,client.getGameCycle()+32);
+					RestoreSplat fresh = new RestoreSplat(value,client.getGameCycle()+32);
 					if (!config.excludeDrink())
 						prayersplats.add(fresh);
 				}
@@ -256,23 +259,32 @@ public class VitalityPlugin extends Plugin
 	{
 		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
 		{
-			setLocalPlayer(client.getLocalPlayer());
-			setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
-			setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
-			setHitsplats(new ArrayList<>());
-			setHealsplats(new ArrayList<>());
-			setPrayersplats(new ArrayList<>());
-			setSecretsplats(new ArrayList<>());
-
-			secretFeature.gameStateChanged();
+			init();
 		}
+	}
+	void init()
+	{
+		//we have to keep checking
+		//if the client exists
+		//until not stuck in void
+		if (client.getLocalPlayer() == null) return;
+
+		setLocalPlayer(client.getLocalPlayer());
+		setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+		setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
+		//commented out until tick eats are fixed
+		//setHitsplats(new ArrayList<>());
+		setHealsplats(new ArrayList<>());
+		setPrayersplats(new ArrayList<>());
+		setSecretsplats(new ArrayList<>());
+		secretFeature.gameStateChanged();
 	}
 
 	@Subscribe
 	public void onStatChanged(StatChanged event)
 	{
 		Skill skill = event.getSkill();
-
+		if (localPlayer == null) return;
 		//because statChanged happens before containerChanged
 		//we need to filter out eating
 		if (localPlayer.getAnimation() == AnimationID.CONSUMING)
@@ -304,7 +316,7 @@ public class VitalityPlugin extends Plugin
 			//add healsplat
 			if (currentPrayer > getPreviousPrayer())
 			{
-				Hitsplat pray = new Hitsplat(HitsplatID.HEAL,currentPrayer-getPreviousPrayer(),client.getGameCycle()+40);
+				RestoreSplat pray = new RestoreSplat(currentPrayer-getPreviousPrayer(),client.getGameCycle()+40);
 				prayersplats.add(pray);
 			}
 			setPreviousPrayer(currentPrayer);
@@ -315,22 +327,22 @@ public class VitalityPlugin extends Plugin
 		{
 			int currentHealth = client.getBoostedSkillLevel(Skill.HITPOINTS);
 
-			//region regen config
-
+			//region regen bracelet edge case
 			int gloves = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.HANDS);
 			int difference = currentHealth - getPreviousHealth();
-			boolean regen = (difference == 1) || (difference == 2 && gloves == 11133);
+			boolean isRegenBracelet = gloves == 11133;
+			boolean regen = (difference == 1) || (difference == 2 && isRegenBracelet);
 			if (regen && config.ignoreRegen())
 			{
 				setPreviousHealth(currentHealth);
 				return;
 			}
-			//endregion regen config
+			//endregion regen bracelet edge case
 
 			//region soulreaper edge case
 			int weapon = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
 			boolean isSoulreaper = weapon == 28338;
-			if (weapon == 28338 && (currentHealth - getPreviousHealth()) % 8 == 0
+			if (isSoulreaper && (currentHealth - getPreviousHealth()) % 8 == 0
 					&& localPlayer.getAnimation() != AnimationID.CONSUMING)
 			{
 				//if currentHealth weapon is the Soulreaper axe
@@ -355,13 +367,13 @@ public class VitalityPlugin extends Plugin
 				//add a blacklist for existing heals
 				//so that there isn't double heals
 				//edit: not needed since we update the hp
-				Hitsplat heal = new Hitsplat(HitsplatID.HEAL,currentHealth-getPreviousHealth(),client.getGameCycle()+40);
+				HealSplat heal = new HealSplat(currentHealth-getPreviousHealth(),client.getGameCycle()+40);
 
 				if (!healsplats.isEmpty())
 				{
 					for (Hitsplat existing:healsplats)
 					{
-						healsplats.set(healsplats.indexOf(existing),new Hitsplat(existing.getHitsplatType(),
+						healsplats.set(healsplats.indexOf(existing),new HealSplat(
 								existing.getAmount(),client.getGameCycle()+40));
 					}
 				}
@@ -379,6 +391,11 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onGameTick(GameTick event)
 	{
+		//we have to keep checking because you technically don't exist for 12 frames after login
+		//where do you go? probably stuck in the void
+		//i wonder how that feels
+		if (localPlayer == null)
+			init();
 		//region debug code, comment out when done
 		if (false)//client.getGameCycle() % 40 < 10)
 		{
@@ -398,20 +415,21 @@ public class VitalityPlugin extends Plugin
 		//endregion debug code
 
 		//region clear expired hitsplats
-		if (!hitsplats.isEmpty())
-			for (int i = hitsplats.size()-1;i>=0;i--)
-			{
-				Hitsplat hurt = hitsplats.get(i);
-				if (hurt.getDisappearsOnGameCycle() < client.getGameCycle())
-				{
-					hitsplats.remove(hurt);
-				}
-			}
+		//commented out until tickeats are fixed
+		//if (!hitsplats.isEmpty())
+		//	for (int i = hitsplats.size()-1;i>=0;i--)
+		//	{
+		//		Hitsplat hurt = hitsplats.get(i);
+		//		if (hurt.getDisappearsOnGameCycle() < client.getGameCycle())
+		//		{
+		//			hitsplats.remove(hurt);
+		//		}
+		//	}
 		//
 		if (!secretsplats.isEmpty())
 			for (int i = secretsplats.size()-1;i>=0;i--)
 			{
-				Hitsplat hit = secretsplats.get(i);
+				SecretSplat hit = secretsplats.get(i);
 				if (hit.getDisappearsOnGameCycle() < client.getGameCycle())
 				{
 					secretsplats.remove(hit);
@@ -421,7 +439,7 @@ public class VitalityPlugin extends Plugin
 		if (!healsplats.isEmpty())
 			for (int i = healsplats.size()-1;i>=0;i--)
 			{
-				Hitsplat hit = healsplats.get(i);
+				HealSplat hit = healsplats.get(i);
 				if (hit.getDisappearsOnGameCycle() < client.getGameCycle())
 				{
 					healsplats.remove(hit);
@@ -430,7 +448,7 @@ public class VitalityPlugin extends Plugin
 		if (!prayersplats.isEmpty())
 			for (int i = prayersplats.size()-1;i>=0;i--)
 			{
-				Hitsplat pray = prayersplats.get(i);
+				RestoreSplat pray = prayersplats.get(i);
 				if (pray.getDisappearsOnGameCycle() < client.getGameCycle())
 				{
 					prayersplats.remove(pray);

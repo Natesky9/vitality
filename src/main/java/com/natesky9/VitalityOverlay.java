@@ -1,5 +1,8 @@
 package com.natesky9;
 
+import com.natesky9.Hitsplats.HealSplat;
+import com.natesky9.Hitsplats.RestoreSplat;
+import com.natesky9.Hitsplats.SecretSplat;
 import net.runelite.api.*;
 import net.runelite.api.Point;
 import net.runelite.client.ui.FontManager;
@@ -43,28 +46,28 @@ public class VitalityOverlay extends Overlay {
             {
                 //instead of drawing from the head down
                 //we draw from the feet up now
-                Hitsplat heal = plugin.healsplats.get(i);
+                HealSplat heal = plugin.healsplats.get(i);
                 BufferedImage image = drawHitsplat(heal,HEALSPLAT);
                 Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
                 Point canvas = new Point(point.getX()+xOffset(i)-6,point.getY()+yOffset(i));
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
             }
         }
-        if (!plugin.hitsplats.isEmpty())
-        {
-            Hitsplat dodge = plugin.hitsplats.get(0);
-            BufferedImage image = drawHitsplat(dodge,DODGE);
-            Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-62+35);
-            int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
-            Point canvas = new Point(point.getX()+16-x,point.getY());
-            OverlayUtil.renderImageLocation(graphics,canvas,image);
-            //}
-        }
+        //commented out until tickeats are fixed
+        //if (!plugin.hitsplats.isEmpty())
+        //{
+        //    Hitsplat dodge = plugin.hitsplats.get(0);
+        //    BufferedImage image = drawHitsplat(dodge,DODGE);
+        //    Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()-62+35);
+        //    int x = dodge.getDisappearsOnGameCycle() -client.getGameCycle();
+        //    Point canvas = new Point(point.getX()+16-x,point.getY());
+        //    OverlayUtil.renderImageLocation(graphics,canvas,image);
+        //    //}
+        //}
         if (!plugin.prayersplats.isEmpty())
         {
-            Hitsplat prayer = plugin.prayersplats.get(0);
+            RestoreSplat prayer = plugin.prayersplats.get(0);
             BufferedImage image = drawPrayersplat(prayer,PRAYER);
-
             //don't know why this doesn't line up right
             Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
             Point canvas = new Point(point.getX()-6,point.getY()-60);
@@ -76,8 +79,8 @@ public class VitalityOverlay extends Overlay {
         {
             for (int i=0;i<plugin.secretsplats.size();i++)
             {
-                Hitsplat heal = plugin.secretsplats.get(i);
-                BufferedImage image = drawHitsplat(heal,APRIL);
+                SecretSplat first = plugin.secretsplats.get(i);
+                BufferedImage image = drawHitsplat(first,APRIL);
                 Point point = actor.getCanvasImageLocation(image, actor.getLogicalHeight()/2);
                 Point canvas = new Point(point.getX()+xOffset(i)-6,point.getY()+yOffset(i)-40);
                 OverlayUtil.renderImageLocation(graphics, canvas,image);
@@ -209,12 +212,7 @@ public class VitalityOverlay extends Overlay {
         if (config.healScaling())
             scale = 1+(int) (value*.02);
 
-        Image tempImage;
-
-        //if (icon == APRIL)
-        //    tempImage = image.getScaledInstance(width/3, height/3, Image.SCALE_SMOOTH);
-        //else
-            tempImage = image.getScaledInstance(width*scale,height*scale,Image.SCALE_SMOOTH);
+        Image tempImage = image.getScaledInstance(width * scale, height * scale, Image.SCALE_SMOOTH);
         ImageIcon sizedImageIcon = new ImageIcon(tempImage);
 
         BufferedImage bi = new BufferedImage(
