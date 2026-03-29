@@ -201,8 +201,11 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged changed)
 	{
-			setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
-			setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+		setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
+		setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
+		//only process eating or drinking, to prevent banking/dropping
+		if (localPlayer.getAnimation() != AnimationID.CONSUMING)
+			return;
 
 		int inventory = changed.getContainerId();
 		//early exit if not the player inventory
@@ -229,7 +232,9 @@ public class VitalityPlugin extends Plugin
 			StatChange[] stats = effect.calculate(client).getStatChanges();
 			for (StatChange change:stats)
 			{
-				int value = change.getRelative();
+				int value = change.getTheoretical();
+				//skip zero or negative "heals"
+				if (value <= 0) continue;
 
 				if (change.getStat() == Stats.HITPOINTS)
 				{
@@ -305,14 +310,6 @@ public class VitalityPlugin extends Plugin
 				setPreviousPrayer(currentPrayer);
 				return;
 			}
-
-			//if (config.excludeFood() && localPlayer.getAnimation() == AnimationID.CONSUMING)
-			//{
-			//	//test if stats are changed before animation plays
-			//	//depreciated, using containerChanged now
-			//	setPreviousPrayer(currentPrayer);
-			//	return;
-			//}
 			//add healsplat
 			if (currentPrayer > getPreviousPrayer())
 			{
@@ -350,16 +347,6 @@ public class VitalityPlugin extends Plugin
 				return;
 			}
 			//endregion soulreaper edge case
-
-			//region foodHealing
-			//depreciated, moved to containerChanged
-			//if (config.excludeFood() && localPlayer.getAnimation() == AnimationID.CONSUMING)
-			//{
-			//	//test if stats are changed before animation plays
-			//	setPreviousHealth(currentHealth);
-			//	return;
-			//}
-			//endregion foodHealing
 
 			//add healsplat
 			if (currentHealth > getPreviousHealth())

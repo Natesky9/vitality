@@ -5,6 +5,10 @@ import com.natesky9.Hitsplats.RestoreSplat;
 import com.natesky9.Hitsplats.SecretSplat;
 import net.runelite.api.*;
 import net.runelite.api.Point;
+import net.runelite.api.gameval.InterfaceID;
+import net.runelite.api.widgets.Widget;
+import net.runelite.api.widgets.WidgetID;
+import net.runelite.api.widgets.WidgetInfo;
 import net.runelite.client.ui.FontManager;
 import net.runelite.client.ui.overlay.*;
 import net.runelite.client.util.ImageUtil;
@@ -35,10 +39,18 @@ public class VitalityOverlay extends Overlay {
 
     @Override
     public Dimension render(Graphics2D graphics) {
+        Actor actor = plugin.getLocalPlayer();
+        if (actor == null)
+            return null;
+
+        Widget bank = client.getWidget(InterfaceID.Bankmain.UNIVERSE);
+        //don't render inside the bank
+        //future update: render heals/restores in the bank somewhere else
+        if (bank == null || !bank.isHidden())
+            return null;
         setLayer(OverlayLayer.UNDER_WIDGETS);
         setPosition(OverlayPosition.DYNAMIC);
         setPriority(OverlayPriority.HIGH);
-        Actor actor = plugin.getLocalPlayer();
 
         if (!plugin.healsplats.isEmpty())
         {
