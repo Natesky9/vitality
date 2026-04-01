@@ -75,8 +75,6 @@ public class VitalityPlugin extends Plugin
 	public int previousPrayer = 255;
 	@Getter @Setter
 	public boolean secret;
-	@Getter @Setter
-	public Actor localPlayer = null;
 
 	@Getter @Setter
 	public ArrayList<Hitsplat> hitsplats;
@@ -201,6 +199,7 @@ public class VitalityPlugin extends Plugin
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged changed)
 	{
+		Actor localPlayer = client.getLocalPlayer();
 		setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
 		setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
 		//only process eating or drinking, to prevent banking/dropping
@@ -260,11 +259,22 @@ public class VitalityPlugin extends Plugin
 		items = Arrays.stream(container.getItems()).filter(check -> check.getId() != -1).toArray(Item[]::new);
 	}
 	@Subscribe
-	public void onGameStateChanged(GameStateChanged gameStateChanged)
+	public void onGameStateChanged(GameStateChanged state)
 	{
-		if (gameStateChanged.getGameState() == GameState.LOGGED_IN)
+		if (state.getGameState() == GameState.LOGGED_IN)
 		{
 			init();
+
+			//commented out until tick eats are fixed
+			//setHitsplats(new ArrayList<>());
+			setHealsplats(new ArrayList<>());
+			setPrayersplats(new ArrayList<>());
+			setSecretsplats(new ArrayList<>());
+			secretFeature.gameStateChanged();
+		}
+		else
+		{
+			setItems(null);
 		}
 	}
 	void init()
@@ -274,25 +284,18 @@ public class VitalityPlugin extends Plugin
 		//until not stuck in void
 		if (client.getLocalPlayer() == null) return;
 
-		setLocalPlayer(client.getLocalPlayer());
 		setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
 		setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
-		//commented out until tick eats are fixed
-		//setHitsplats(new ArrayList<>());
-		setHealsplats(new ArrayList<>());
-		setPrayersplats(new ArrayList<>());
-		setSecretsplats(new ArrayList<>());
-		secretFeature.gameStateChanged();
 	}
 
 	@Subscribe
 	public void onStatChanged(StatChanged event)
 	{
 		Skill skill = event.getSkill();
-		if (localPlayer == null) return;
+		if (client.getLocalPlayer() == null) return;
 		//because statChanged happens before containerChanged
 		//we need to filter out eating
-		if (localPlayer.getAnimation() == AnimationID.CONSUMING)
+		if (client.getLocalPlayer().getAnimation() == AnimationID.CONSUMING)
 		{
 			setPreviousPrayer(client.getBoostedSkillLevel(Skill.PRAYER));
 			setPreviousHealth(client.getBoostedSkillLevel(Skill.HITPOINTS));
@@ -340,7 +343,7 @@ public class VitalityPlugin extends Plugin
 			int weapon = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
 			boolean isSoulreaper = weapon == 28338;
 			if (isSoulreaper && (currentHealth - getPreviousHealth()) % 8 == 0
-					&& localPlayer.getAnimation() != AnimationID.CONSUMING)
+					&& client.getLocalPlayer().getAnimation() != AnimationID.CONSUMING)
 			{
 				//if currentHealth weapon is the Soulreaper axe
 				setPreviousHealth(currentHealth);
@@ -381,7 +384,7 @@ public class VitalityPlugin extends Plugin
 		//we have to keep checking because you technically don't exist for 12 frames after login
 		//where do you go? probably stuck in the void
 		//i wonder how that feels
-		if (localPlayer == null)
+		if (client.getLocalPlayer() == null)
 			init();
 		//region debug code, comment out when done
 		if (false)//client.getGameCycle() % 40 < 10)

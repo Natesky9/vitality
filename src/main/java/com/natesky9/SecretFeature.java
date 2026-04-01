@@ -85,7 +85,7 @@ public class SecretFeature {
             }
             setJokeTimer(getJokeTimer()+1);
 
-            if (getJokeTimer() > 180 && getFools().size() < 5)
+            if (getJokeTimer() > 1000 && getFools().size() < 5)
             {
                 RuneLiteObject mage = spawnFool();
                 if (mage != null)
