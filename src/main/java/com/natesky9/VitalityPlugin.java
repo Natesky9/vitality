@@ -105,7 +105,7 @@ public class VitalityPlugin extends Plugin
 		if (config.aprilFools1() && !config.aprilFools2() && config.aprilFools3() && config.aprilFools4()
 				&& config.aprilFools5() && Objects.equals(event.getNewValue(), "true"))
 			clientThread.invoke(new ChatRunnable(client,"Let me see, those two boxes are.... <col=ff0000>three and four</col=ff0000>"));
-		if ((event.getKey().equals("aprilFools3") || event.getKey().equals("aprilFools4"))
+		if ((event.getKey().equals("aprilFools3") || event.getKey().equals("aprilFools4") || event.getKey().equals("aprilFools2"))
 				&& (!config.aprilFools3() && !config.aprilFools4()) && config.aprilFools1() && config.aprilFools2() && config.aprilFools5())
 			clientThread.invoke(new ChatRunnable(client,"Oh dear, that didn't work. Maybe only <col=ff0000>check the even boxes</col=ff0000>"));
 		if (!config.aprilFools1() && config.aprilFools2() && !config.aprilFools3() && config.aprilFools4()
