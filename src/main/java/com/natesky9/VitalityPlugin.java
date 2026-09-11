@@ -46,11 +46,13 @@ public class VitalityPlugin extends Plugin
 	@Inject
 	private VitalityOverlay vitalityOverlay;
 	@Inject
+	private VitalityHitsplatOverrides vitalityHitsplatOverrides;
+	@Inject
 	private VitalityConfig config;
 	@Inject
 	private SecretFeature secretFeature;
 	@Inject
-	private ItemStatChangesService service;
+	protected ItemStatChangesService service;
 	@Inject
 	private ClientThread clientThread;
 	@Inject
@@ -68,6 +70,13 @@ public class VitalityPlugin extends Plugin
 		overlayManager.add(vitalityOverlay);
 		setSecret(config.aprilFools1() && !config.aprilFools2() && config.aprilFools3()
 				&& config.aprilFools4() && !config.aprilFools5());
+		//vitalityHitsplatOverrides.replaceHitsplats();
+	}
+	@Override
+	protected void shutDown() throws Exception
+	{
+		overlayManager.remove(vitalityOverlay);
+		vitalityHitsplatOverrides.revertHitsplats();
 	}
 	@Getter @Setter
 	public int previousHealth = 255;
@@ -89,11 +98,6 @@ public class VitalityPlugin extends Plugin
 
 
 
-	@Override
-	protected void shutDown() throws Exception
-	{
-		overlayManager.remove(vitalityOverlay);
-	}
 	@Subscribe
 	public void onConfigChanged(ConfigChanged event)
 	{
@@ -139,36 +143,10 @@ public class VitalityPlugin extends Plugin
 		if (!event.getMenuAction().equals(MenuAction.CC_OP_LOW_PRIORITY)) return;
 		int item = event.getItemId();
 
-		StringBuilder text = new StringBuilder();
+		String text = VitalityExamines.fetch(client,service,item);
+		if (text == null) return;
 
-		//edge case for surge pot
-		switch (item)
-		{
-			case 30884:
-			case 30881:
-			case 30878:
-			case 30875:
-			{
-				//every dose of the surge potion
-				text.append("<col=ff0000>When consumed:</col>");
-				text.append(" Special attack + 25");
-				break;
-			}
-			default:
-			{
-				Effect effect = service.getItemStatChanges(item);
-				if (effect == null) return;
-				StatChange[] stats = effect.calculate(client).getStatChanges();
-				text.append("<col=ff0000>When consumed:</col>");
-				for (StatChange stat:stats)
-				{
-					text.append(" ").append(stat.getStat().getName()).append(" ");
-					text.append(stat.getFormattedTheoretical());
-				}
-				break;
-			}
-		}
-		client.addChatMessage(ChatMessageType.ENGINE,"Vitality",text.toString(),"");
+		client.addChatMessage(ChatMessageType.ENGINE,"Vitality",text,"");
 	}
 	@Subscribe
 	public void onHitsplatApplied(HitsplatApplied applied)
@@ -176,25 +154,22 @@ public class VitalityPlugin extends Plugin
 		if (!config.displayTickEat()) return;
 
 		//disabled until tickeats are figured out
-		//Hitsplat hit = applied.getHitsplat();
-		//if (!hit.isMine()) return;
-		//int amount = hit.getAmount();
-		//if (amount == 0) return;
-		//if (hit.getHitsplatType() != HitsplatID.DAMAGE_ME) return;
-		//int heals = 0;
-		//for (Hitsplat hitsplat: healsplats)
-		//{
-		//	heals += hitsplat.getAmount();
-		//}
-		//int current = getPreviousHealth();
-		//if (current < heals)
-		//{
-		//	Hitsplat hurt = new HealSplat(amount,client.getGameCycle()+32);
-		//	hitsplats.add(hurt);
-		//	int sound = config.tickEatSound();
-		//	if (sound != -1)
-		//		client.playSoundEffect(sound);
-		//}
+		Hitsplat hit = applied.getHitsplat();
+		if (!hit.isMine()) return;
+		int amount = hit.getAmount();
+		if (amount == 0) return;
+		if (hit.getHitsplatType() != HitsplatID.DAMAGE_ME) return;
+		if (healsplats.isEmpty()) return;
+		int heals = healsplats.get(healsplats.size()-1).getAmount();
+		int current = getPreviousHealth();
+		if (current == heals)
+		{
+			Hitsplat hurt = new HealSplat(amount,client.getGameCycle()+32);
+			hitsplats.add(hurt);
+			int sound = config.tickEatSound();
+			if (sound != -1)
+				client.playSoundEffect(sound);
+		}
 	}
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged changed)
@@ -339,9 +314,11 @@ public class VitalityPlugin extends Plugin
 			}
 			//endregion regen bracelet edge case
 
+			//TODO replace this with a chat-based approach
 			//region soulreaper edge case
 			int weapon = client.getLocalPlayer().getPlayerComposition().getEquipmentId(KitType.WEAPON);
-			boolean isSoulreaper = weapon == 28338;
+			//test whether equipped weapon is the SRA
+			boolean isSoulreaper = weapon == 28338 || weapon == 33335;
 			if (isSoulreaper && (currentHealth - getPreviousHealth()) % 8 == 0
 					&& client.getLocalPlayer().getAnimation() != AnimationID.CONSUMING)
 			{
